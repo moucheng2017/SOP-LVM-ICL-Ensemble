@@ -51,10 +51,18 @@ data_directory/
 ## How to start with this git repo:
 Please have a closer look at the default config file in "configs/example.yml". To run the current pipeline, you can run the main function via:
 ```bash
-cd lmm_icl
+cd your_own_working_directory_of_this_repository
 python main.py --config configs/example.yml
 ```
 Modify the config file to your own specifications. The used config files will always be saved in the result folder so you can always reproduce your results. It is suggested to create new config files for new experiments. Feel free to experiment any cool prompts you want!
+
+## How to start new tasks within this repo:
+1. Go to "Issues" on the github repo: https://github.com/mcx-agile-loop/action-labelling/issues
+2. Create a new issue with whatever your new task is
+3. Create a new branch from the new issue
+4. Work on your own branch
+
+Always make sure your are using the latest git repo by "git fetch" and always work on your own local branch.
 
 ## The current prompts for training:
 ```
