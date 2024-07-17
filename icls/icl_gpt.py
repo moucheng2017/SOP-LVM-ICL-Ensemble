@@ -60,6 +60,7 @@ def main_gpt(args):
 
     # print('Testing started..\n')
     for video in tqdm(test_videos_paths, desc="Testing videos"):
+        prompt_test_index = 0
         frames, number_frames = read_frames(video, resize)
         contents = []
         contents.append(config['prompts']['testing_example'].format(number_frames=number_frames))
@@ -78,6 +79,7 @@ def main_gpt(args):
             "content": contents
         }
         prompt.append(frames_labels)
+        prompt_test_index += 1
         
         predictions = []
         num_inferences = config['majority_voting_candidates']
@@ -136,6 +138,7 @@ def main_gpt(args):
             print('The prediction is saved at: ', save_path)
             print('The prediction is: \n', final_prediction)
         
+        # remove testing prompts:
         prompt.pop()
         time.sleep(10)
 
