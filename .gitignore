@@ -5,6 +5,8 @@ dir/env/
 # Byte-compiled / optimized / DLL files
 **/__pycache__/
 __pycache__/
+icls/__pycache__/
+icls/**/__pycache__/
 
 # Pycharm directory
 .idea/

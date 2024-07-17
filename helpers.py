@@ -4,6 +4,10 @@ import base64
 from collections import Counter
 import yaml
 
+def save_config(config, save_path):
+    with open(save_path / 'config.yaml', 'w') as file:
+        yaml.dump(config, file)
+        
 def load_config(config_path="config.yaml"):
     with open(config_path, 'r') as file:
         config = yaml.safe_load(file)

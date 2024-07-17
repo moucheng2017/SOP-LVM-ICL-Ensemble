@@ -10,7 +10,7 @@ top_p_majority_voting: 0.5 # normally less than 1
 top_p_self_reflect: 0.9 # normally less than 1
 majority_voting_candidates: 5 # number of candidates for majority voting, if it is 1, it will not use majority voting
 image_resize: [1024, 768] # [width, height]
-use_self_reflect: true # when used, it will use the self-reflect mechanism
+use_self_reflect: false # when used, it will use the self-reflect mechanism
 debug_mode: true # when used, it will only test on the last video of the testing videos
 prompts: 
   system: > 
