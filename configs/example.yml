@@ -1,7 +1,9 @@
 model_name: "gpt-4o"
 api_key: sk-proj-ZxH9n4f7EHjWlCBo0bdjT3BlbkFJzpfDqdqNHisk1b56DZoM # Ask Sam for your api key
-train_data_path: ../../../data/many_shots_1719414312.8246899_train_10_debug_only_detailed_labels/training # change this to your own path
-test_data_path: ../../../data/many_shots_1719414312.8246899_train_10_debug_only_detailed_labels/testing # change this to your own path
+train_screenshots_txt: /home/moucheng/data/split/Notepad/many_shots_1719414312.8246899_train_10_debug_only_detailed_labels/training/screenshots.txt # change this to your own path
+test_screenshots_txt: /home/moucheng/data/split/Notepad/many_shots_1719414312.8246899_train_10_debug_only_detailed_labels/testing/screenshots.txt # change this to your own path
+train_labels_txt: /home/moucheng/data/split/Notepad/many_shots_1719414312.8246899_train_10_debug_only_detailed_labels/training/labels.txt # change this to your own path
+# test_labels_txt: /home/moucheng/data/split/Notepad/many_shots_1719414312.8246899_train_10_debug_only_detailed_labels/testing/labels.txt # change this to your own path
 save_path: ../../../results # change this to your own path
 max_tokens: 2000 # normally less than 4000
 temperature_majority_voting: 0.5 # normally less than 1

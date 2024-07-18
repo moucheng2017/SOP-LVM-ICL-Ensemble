@@ -5,6 +5,7 @@ from openai import OpenAI
 from tqdm import tqdm
 from helpers import save_config, load_config, read_frames
 from helpers import read_labels, majority_vote, prediction_template
+from helpers import read_paths_from_txt, check_videos_paths
 import yaml
 from pathlib import Path
 import argparse
@@ -15,8 +16,17 @@ def main_gpt(args):
     print(config)
     client = OpenAI(api_key=config['api_key'])
     
-    train_data = config['train_data_path']
-    test_data = config['test_data_path']
+    train_screenshots = config['train_screenshots_txt']
+    test_screenshots = config['test_screenshots_txt']
+    train_labels = config['train_labels_txt']
+    # test_labels = config['test_labels_txt']
+
+    train_screenshots_paths = read_paths_from_txt(train_screenshots)
+    test_screenshots_paths = read_paths_from_txt(test_screenshots)
+    train_labels_paths = read_paths_from_txt(train_labels)
+
+    check_videos_paths(train_screenshots_paths, train_labels_paths)
+
     resize = config['image_resize']
     save_base_path = Path(config['save_path'])
     
@@ -26,17 +36,22 @@ def main_gpt(args):
     
     # Save the used config
     save_config(config, current_save_path)
+
+    # get train_data and test_data:
+    # iterate over the train_screenshots_paths, for each path, remove the last part after the last '/':
+    train_videos_paths = [path.rsplit('/', 1)[0] for path in train_screenshots_paths]
+    test_videos_paths = [path.rsplit('/', 1)[0] for path in test_screenshots_paths]
+    # print('train_data: ', train_videos_paths)
+    # print('test_data: ', test_videos_paths)
     
-    all_train_videos = os.listdir(train_data)
-    all_test_videos = os.listdir(test_data)
-    train_videos_paths = [os.path.join(train_data, video) for video in all_train_videos]
     if config['debug_mode'] and config['debug_mode'] == True:
         print('Debug mode is on, only testing the last video.')
         # test_videos_paths = [os.path.join(test_data, video) for video in all_test_videos[-2:]]
-        test_videos_paths = [os.path.join(test_data, video) for video in all_test_videos[-1:]]
+        test_videos_paths = test_videos_paths[-1:]
+        assert len(test_videos_paths) == 1
     else:
         print('Testing on all videos.')
-        test_videos_paths = [os.path.join(test_data, video) for video in all_test_videos]
+        pass
 
     prompt = [{
         "role": "system",
@@ -60,6 +75,7 @@ def main_gpt(args):
 
     # print('Testing started..\n')
     for video in tqdm(test_videos_paths, desc="Testing videos"):
+    # for video in test_videos_paths:
         prompt_test_index = 0
         frames, number_frames = read_frames(video, resize)
         contents = []
