@@ -18,14 +18,14 @@ def main_gpt(args):
     
     train_screenshots = config['train_screenshots_txt']
     test_screenshots = config['test_screenshots_txt']
-    train_labels = config['train_labels_txt']
+    # train_labels = config['train_labels_txt']
     # test_labels = config['test_labels_txt']
 
     train_screenshots_paths = read_paths_from_txt(train_screenshots)
     test_screenshots_paths = read_paths_from_txt(test_screenshots)
-    train_labels_paths = read_paths_from_txt(train_labels)
+    # train_labels_paths = read_paths_from_txt(train_labels)
 
-    check_videos_paths(train_screenshots_paths, train_labels_paths)
+    # check_videos_paths(train_screenshots_paths, train_labels_paths)
 
     resize = config['image_resize']
     save_base_path = Path(config['save_path'])
@@ -49,6 +49,8 @@ def main_gpt(args):
         # test_videos_paths = [os.path.join(test_data, video) for video in all_test_videos[-2:]]
         test_videos_paths = test_videos_paths[-1:]
         assert len(test_videos_paths) == 1
+        # only use the first two videos from train_data:
+        train_videos_paths = train_videos_paths[:2]
     else:
         print('Testing on all videos.')
         pass
@@ -58,22 +60,42 @@ def main_gpt(args):
         "content": config['prompts']['system']
     }]
 
-    for video in train_videos_paths:
-        frames, number_frames = read_frames(video, resize)
-        labels = read_labels(video)
-        if labels:
-            contents = []
-            contents.append(config['prompts']['training_example'].format(number_frames=number_frames))
-            for j in range(number_frames):
-                contents.append({"image": frames[j], "resize": tuple(resize)})
-                contents.append(labels.split('\n')[j])
-            frames_labels = {
-                "role": "user",
-                "content": contents
-            }
-            prompt.append(frames_labels)
+    # use in context learning if config["in_context_learning"] exists and is true
+    if config.get("in_context_learning") and config["in_context_learning"] == True: 
+        print('Using in-context learning..')
+        for video in train_videos_paths:
+            frames, number_frames = read_frames(video, resize)
+            labels = read_labels(video)
+            # print(labels)
+            if labels:
+                contents = []
+                contents.append(config['prompts']['training_example'].format(number_frames=number_frames))
+                if len(labels.split('\n')) != number_frames:
+                    # set a flag to see if the labels are not aligned with the frames:
+                    frames_labels_aligned = False
+                    for j in range(number_frames):
+                        contents.append({"image": frames[j], "resize": tuple(resize)})
+                    # remove the first line of labels
+                    labels = labels.split('\n')  
+                    labels = '\n'.join(labels[1:]) 
+                    # remove empty lines
+                    labels = labels.split('\n')  
+                    labels = [line for line in labels if line.strip() != '']
+                    labels = '\n'.join(labels)
+                    # print(labels)
+                    contents.append(labels)
+                else:
+                    for j in range(number_frames):
+                        contents.append({"image": frames[j], "resize": tuple(resize)})
+                        contents.append(labels.split('\n')[j])
+                frames_labels = {
+                    "role": "user",
+                    "content": contents
+                }
+                prompt.append(frames_labels)
+        print('In-context learning completed..\n')
 
-    # print('Testing started..\n')
+    print('Testing started..\n')
     for video in tqdm(test_videos_paths, desc="Testing videos"):
     # for video in test_videos_paths:
         prompt_test_index = 0

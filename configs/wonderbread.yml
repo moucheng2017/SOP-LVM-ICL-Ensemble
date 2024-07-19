@@ -1,13 +1,13 @@
 model_name: "gpt-4o"
 api_key: sk-proj-ZxH9n4f7EHjWlCBo0bdjT3BlbkFJzpfDqdqNHisk1b56DZoM # Ask Sam for your api key
-train_screenshots_txt: /home/moucheng/data/split/Notepad/many_shots_1719414312.8246899_train_10_debug_only_detailed_labels/training/screenshots.txt # change this to your own path
-test_screenshots_txt: /home/moucheng/data/split/Notepad/many_shots_1719414312.8246899_train_10_debug_only_detailed_labels/testing/screenshots.txt # change this to your own path
-train_labels_txt: /home/moucheng/data/split/Notepad/many_shots_1719414312.8246899_train_10_debug_only_detailed_labels/training/labels.txt # change this to your own path
-# test_labels_txt: /home/moucheng/data/split/Notepad/many_shots_1719414312.8246899_train_10_debug_only_detailed_labels/testing/labels.txt # change this to your own path
+train_screenshots_txt: /home/moucheng/data/split/Wonderbread/1721311190.047799/training/screenshots.txt # change this to your own path
+test_screenshots_txt: /home/moucheng/data/split/Wonderbread/1721311190.047799/training/labels.txt # change this to your own path
+train_labels_txt: /home/moucheng/data/split/Wonderbread/1721311190.047799/testing/screenshots.txt # change this to your own path
+test_labels_txt: /home/moucheng/data/split/Wonderbread/1721311190.047799/testing/labels.txt # change this to your own path
 save_path: ../../../results # change this to your own path
-max_tokens: 2000 # normally less than 4000
+max_tokens: 1000 # normally less than 4000
+in_context_learning:  # flag for using few shot learning
 temperature_majority_voting: 0.5 # normally less than 1
-in_context_learning: true # flag to use in context learning for fine tuning
 temperature_self_reflect: 0.1 # normally less than 1
 top_p_majority_voting: 0.5 # normally less than 1
 top_p_self_reflect: 0.9 # normally less than 1

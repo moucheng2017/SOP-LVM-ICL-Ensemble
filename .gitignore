@@ -7,6 +7,8 @@ dir/env/
 __pycache__/
 icls/__pycache__/
 icls/**/__pycache__/
+evals/__pycache__/
+evals/**/__pycache__/
 
 # Pycharm directory
 .idea/
@@ -26,3 +28,9 @@ icls/**/__pycache__/
 *.cache
 *.vscode
 .DS_Store
+
+# cache files
+evals/sop_cache/
+
+# results:
+evals/dummy_debug_eval_results.csv
