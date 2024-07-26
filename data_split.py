@@ -98,7 +98,7 @@ def prepare_data(source_path,
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Prepare data for training and testing.")
-    parser.add_argument("--source_path", type=str, help="Path to the source data folder.")
+    parser.add_argument("--source_path", type=str, help="Path to the source data folder.", default="/home/moucheng/data/Wonderbread/gold_demos")
     parser.add_argument("--train_ratio", type=float, default=0.3, help="Ratio of training data.")
     parser.add_argument("--test_ratio", type=float, default=0.7, help="Ratio of testing data.")
     parser.add_argument("--random_seed", type=int, default=42, help="Random seed.")
