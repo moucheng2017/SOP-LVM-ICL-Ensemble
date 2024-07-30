@@ -4,9 +4,6 @@ import time
 import hashlib
 from openai import OpenAI
 from tqdm import tqdm
-from helpers import save_config, load_config, read_frames
-from helpers import read_labels, majority_vote, prediction_template
-from helpers import read_paths_from_txt, check_videos_paths
 import yaml
 from pathlib import Path
 import argparse
@@ -18,9 +15,9 @@ import random
 # 2. Trim and change the prediction to follow the format of the template.
 # 3. Save the clean version of prediction in the same folder as the prediction.
 # =============================================================================
-template_path = 'path/to/gt/txt'
-prediction_path = 'path/to/prediction/txt'
-client = OpenAI(api_key='dummy_key')
+template_path = '/home/moucheng/data/Wonderbread/gold_demos/14 @ 2024-01-05-02-12-26/SOP - 14 @ 2024-01-05-02-12-26.txt'
+prediction_path = '/home/moucheng/results/1721919139/Wonderbread/gold_demos/69 @ 2024-01-05-04-25-33/label_prediction.txt'
+client = OpenAI(api_key='sk-proj-ZxH9n4f7EHjWlCBo0bdjT3BlbkFJzpfDqdqNHisk1b56DZoM')
 model_name = 'gpt-3.5-turbo'
 
 # load the template:
@@ -39,7 +36,11 @@ with open(prediction_path, 'r') as f:
 prompt = [{
     "role": "system",
     "content": '''
-    Your job is to make the prediction follow the format of the template. Do not change the content of the prediction.
+    Your job is to clean up the prediction text. Do not change the content of the prediction. 
+    Remove empty lines. 
+    Remove any lines which are not enumerated. 
+    Remove symbols like "-", "**", etc.  
+    Merge the lines that are split into multiple lines for each enumerated item.
     '''
 }]
 
@@ -54,6 +55,8 @@ prompt.append(example)
 
 content_prediction = "The following is the prediction:\n"
 content_prediction += prediction
+question = "Please make the prediction follow the format of the template if necessary:"
+content_prediction += '\n' + question
 prediction = {
     "role": "user",
     "content": content_prediction
