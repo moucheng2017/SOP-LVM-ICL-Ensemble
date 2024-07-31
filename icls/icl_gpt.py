@@ -29,33 +29,45 @@ def main_gpt(args):
     train_screenshots = config['train_screenshots_txt']
     test_screenshots = config['test_screenshots_txt']
 
+    # check if the file name in train_screenshots is screenshots.txt
+    assert train_screenshots.split('/')[-1] == 'screenshots.txt'
+    assert test_screenshots.split('/')[-1] == 'screenshots.txt'
+
     train_screenshots_paths = read_paths_from_txt(train_screenshots)
     test_screenshots_paths = read_paths_from_txt(test_screenshots)
     
     resize = config['image_resize']
     save_base_path = Path(config['save_path'])
+
+    train_videos_paths = [path.rsplit('/', 1)[0] for path in train_screenshots_paths]
+    test_videos_paths = [path.rsplit('/', 1)[0] for path in test_screenshots_paths]
     
     # Save the used config
-    if config.get("resume_testing_path") and config["resume_testing_path"] != None:
-        current_save_path = Path(config["resume_testing_path"])
+    if config.get("resume_testing_path") and config["resume_testing_path"] != None and config["resume_testing_path"] != False:
+        current_save_path = config["resume_testing_path"]
+        tested_videos = os.listdir(current_save_path)
+        print('Number of tested videos: ', len(tested_videos)) 
+        all_test_videos = [video.rsplit('/', 1)[1] for video in test_videos_paths]
+        print('Number of all test videos: ', len(all_test_videos))
+        test_videos_parent_path = Path(test_videos_paths[0]).parent
+        untested_videos = [video for video in all_test_videos if video not in tested_videos]
+        test_videos_paths = [os.path.join(test_videos_parent_path, video) for video in untested_videos]
+        print('Number of untested videos: ', len(test_videos_paths))
+        current_save_path = '/'.join(current_save_path.split('/')[:-2])
+        print('Current save path is: ', current_save_path)
+        current_save_path = Path(current_save_path)
         save_config(config, current_save_path)
-    elif config.get("resume_testing_path") and config["resume_testing_path"] == False:
-        current_save_path = Path(config["resume_testing_path"])
-        save_config(config, current_save_path)
+
     else:
         timestamp = str(int(time.time()))
         current_save_path = save_base_path / timestamp
         current_save_path.mkdir(parents=True, exist_ok=True)
         save_config(config, current_save_path)
 
-    train_videos_paths = [path.rsplit('/', 1)[0] for path in train_screenshots_paths]
-    test_videos_paths = [path.rsplit('/', 1)[0] for path in test_screenshots_paths]
-
     if config['debug_mode'] and config['debug_mode'] == True:
         print('Debug mode is on, only testing the last video.')
         test_videos_paths = test_videos_paths[-1:]
         assert len(test_videos_paths) == 1
-        # train_videos_paths = train_videos_paths[:1]
     else:
         print('Testing on all videos.')
 
@@ -66,20 +78,34 @@ def main_gpt(args):
 
     if config.get("in_context_learning") and config["in_context_learning"] == True: 
         print('Using in-context learning..')
-        effective_train_videos_number = config['effective_train_videos_number']
-        number_train_videos = len(train_videos_paths)
-        if number_train_videos > effective_train_videos_number:
-            train_videos_paths_ = random.sample(train_videos_paths, effective_train_videos_number)
+        if config.get("resume_testing_path") and config["resume_testing_path"] != None and config["resume_testing_path"] != False:
+            train_video_path_txt = current_save_path / 'train_videos_paths.txt'
+            with open(train_video_path_txt, 'r') as f:
+                train_videos_paths_ = f.readlines()
+                train_videos_paths_ = [video.strip() for video in train_videos_paths]
         else:
-            train_videos_paths_ = train_videos_paths
+            effective_train_videos_number = config['effective_train_videos_number']
+            number_train_videos = len(train_videos_paths)
+            if number_train_videos > effective_train_videos_number:
+                train_videos_paths_ = random.sample(train_videos_paths, effective_train_videos_number)
+            else:
+                train_videos_paths_ = train_videos_paths
         
-        with open(current_save_path / 'train_videos_paths.txt', 'w') as f:
-            for item in train_videos_paths_:
-                f.write("%s\n" % item)
-        
+            with open(current_save_path / 'train_videos_paths.txt', 'w') as f:
+                for item in train_videos_paths_:
+                    f.write("%s\n" % item)
+
+        prompt.append({
+            "role": "user",
+            "content": """
+            You are given the following sequences of screenshots and their SOP labels. 
+            Each sequence is sourced from a demonstration of the workflow. 
+            Each sequence is presented in chronological order.
+            """
+        })
+
         for video in train_videos_paths_:
-            frames, number_frames = read_frames(video, resize)
- 
+            frames, number_frames = read_frames(video, resize) 
             # Add the training start prompt to the prompt:
             prompt.append(
                 {
@@ -94,7 +120,8 @@ def main_gpt(args):
                 images.append(
                     {"type": "image_url",
                     "image_url": {
-                        "url": f"data:image/png;base64,{frames[j]}"}
+                        "url": f"data:image/png;base64,{frames[j]}",
+                        "detail": "high"}
                     }
                 )
             prompt.append(
@@ -111,6 +138,8 @@ def main_gpt(args):
             # remove empty lines: 
             labels = [line for line in labels if line.strip() != '']
             labels = '\n'.join(labels)
+            labels_header = "The above screenshots have SOP labels as follows:\n"
+            labels = labels_header + labels
             prompt.append({
                 "role": "user",
                 "content": labels
@@ -119,7 +148,9 @@ def main_gpt(args):
         print('In-context learning completed..\n')
     
     print('Testing started..\n')
-
+    testing_videos_number = len(test_videos_paths)
+    print('Number of testing videos: ', testing_videos_number)
+    testing_time_start = time.time()
 
     for video in tqdm(test_videos_paths, desc="Testing videos"):
         prompt_test_index = 0
@@ -140,7 +171,8 @@ def main_gpt(args):
             images.append(
                 {"type": "image_url",
                  "image_url": {
-                     "url": f"data:image/png;base64,{frames[j]}"}
+                     "url": f"data:image/png;base64,{frames[j]}",
+                     "detail": "high"}
                  }
             )
         prompt.append({
@@ -213,7 +245,12 @@ def main_gpt(args):
 
         time.sleep(10)
 
-
+    testing_time_end = time.time()
+    testing_time = testing_time_end - testing_time_start
+    print('Testing time: ', testing_time)
+    # save the testing time information as a txt file in the save path
+    with open(current_save_path / 'testing_time.txt', 'w') as f:
+        f.write(str(testing_time))
     print('Testing completed..\n')
 
 
