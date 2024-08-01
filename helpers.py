@@ -33,10 +33,19 @@ def load_config(config_path="config.yaml"):
     return config
 
 def sort_key(filename):
-    return int(filename.split('_')[1].split('.')[0])
+    # check if the filename is in the format of "0.png":
+    if filename.split('.')[0].isdigit():
+        return int(filename.split('.')[0])
+    else:
+        return int(filename.split('_')[1].split('.')[0])
 
 def read_frames(folder_path, resize=None):
     screenshots_folder_path = os.path.join(folder_path, 'screenshots')
+    if not os.path.exists(screenshots_folder_path):
+        screenshots_folder_path = f'"{screenshots_folder_path}"' 
+    else:
+        pass
+
     base64_frames = []
     screenshots = sorted([f for f in os.listdir(screenshots_folder_path) if f.endswith('.png')], key=sort_key)
     
@@ -64,4 +73,4 @@ def majority_vote(predictions):
     return Counter(predictions).most_common(1)[0][0]
 
 def prediction_template(num_frames):
-    return '\n'.join([f'State {i}:' for i in range(num_frames)])
+    return '\n'.join([f'{i+1}. ' for i in range(num_frames)])

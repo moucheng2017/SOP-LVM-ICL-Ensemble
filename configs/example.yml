@@ -7,6 +7,7 @@ train_labels_txt: /home/moucheng/data/split/Notepad/many_shots_1719414312.824689
 save_path: ../../../results # change this to your own path
 max_tokens: 2000 # normally less than 4000
 temperature_majority_voting: 0.5 # normally less than 1
+in_context_learning: true # flag to use in context learning for fine tuning
 temperature_self_reflect: 0.1 # normally less than 1
 top_p_majority_voting: 0.5 # normally less than 1
 top_p_self_reflect: 0.9 # normally less than 1

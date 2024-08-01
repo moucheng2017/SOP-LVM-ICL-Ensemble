@@ -48,6 +48,8 @@ data_directory/
 ...
 ```
 
+The dataloader reads a txt file for videos so that we can arbitrary data splits without saving the data for each split.
+
 ## How to start with this git repo:
 Please have a closer look at the default config file in "configs/example.yml". To run the current pipeline, you can run the main function via:
 ```bash
@@ -64,7 +66,7 @@ Modify the config file to your own specifications. The used config files will al
 
 Always make sure your are using the latest git repo by "git fetch" and always work on your own local branch.
 
-## The current prompts for training:
+<!-- ## The current prompts for training:
 ```
 You are a labelling assistant to label the user interactions with the screen for every screenshot in the chronological screenshots. Each screenshot is a state of the screen at a certain time. The label for each state should only describe the user's last actions which changed the last state of the screen to the current state of the screen. 
 Each screenshot should have one label. In each label, describe: the user action just happened, the screen display change, and the current screen display.
@@ -73,26 +75,19 @@ Be specific, precise and accurate.
 
 The following is {number_frames} chronological screenshots and their labels:
 {image0.png}
-label0
 {image1.pmng}
-label1
 ...
 {image24.pnt}
-label24
 
-The following is {number_frames} chronological screenshots and their labels:
-{image0.png}
+The following is the labels for the above sequence of screenshots:
 label0
-{image1.pmng}
 label1
 ...
-{image5.pnt}
-label5
+label24
 
-...
-```
+``` -->
 
-## The current prompts for testing:
+<!-- ## The current prompts for testing:
 ```
 The following is {number_frames} chronological screenshots:
 {image0.png}
@@ -108,13 +103,20 @@ State1:
 State10:
 ---END FORMAT TEMPLATE---
 Do not deviate from the above format.
-```
+``` -->
 
 ## The current prompts for self-reflection:
 ```
 The initial prediction is:
 {initial_prediction}
 Please review the screenshots and their prediction. Provide an improved version of the prediction if necessary.
+```
+
+## Evaluation
+In the subfolder called evals, change the parameters in the evals.py first. Set up the api key then run the eval.py.
+```
+export OPEN_API_KEY="some-some-key"
+python evals/eval.py
 ```
 
 ## Contacts
