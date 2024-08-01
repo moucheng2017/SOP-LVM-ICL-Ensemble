@@ -29,9 +29,9 @@ def main_gpt(args):
     train_screenshots = config['train_screenshots_txt']
     test_screenshots = config['test_screenshots_txt']
 
-    # check if the file name in train_screenshots is screenshots.txt
-    assert train_screenshots.split('/')[-1] == 'screenshots.txt'
-    assert test_screenshots.split('/')[-1] == 'screenshots.txt'
+    # # check if the file name in train_screenshots is screenshots.txt
+    # assert train_screenshots.split('/')[-1] == 'screenshots.txt'
+    # assert test_screenshots.split('/')[-1] == 'screenshots.txt'
 
     train_screenshots_paths = read_paths_from_txt(train_screenshots)
     test_screenshots_paths = read_paths_from_txt(test_screenshots)
@@ -43,7 +43,9 @@ def main_gpt(args):
     test_videos_paths = [path.rsplit('/', 1)[0] for path in test_screenshots_paths]
     
     # Save the used config
-    if config.get("resume_testing_path") and config["resume_testing_path"] != None and config["resume_testing_path"] != False:
+    # if config.get("resume_testing_path") and config["resume_testing_path"] != None and config["resume_testing_path"] != False:
+    if config["resume_testing_path"] != None and config["resume_testing_path"] != False:
+        print('Resuming testing..')
         current_save_path = config["resume_testing_path"]
         tested_videos = os.listdir(current_save_path)
         print('Number of tested videos: ', len(tested_videos)) 
@@ -69,22 +71,26 @@ def main_gpt(args):
         test_videos_paths = test_videos_paths[-1:]
         assert len(test_videos_paths) == 1
     else:
-        print('Testing on all videos.')
+        pass
+        # print('Testing on all videos.')
 
     prompt = [{
         "role": "system",
         "content": config['prompts']['system']
     }]
 
-    if config.get("in_context_learning") and config["in_context_learning"] == True: 
+    if config["in_context_learning"] == True: 
         print('Using in-context learning..')
-        if config.get("resume_testing_path") and config["resume_testing_path"] != None and config["resume_testing_path"] != False:
+        if config["resume_testing_path"] != None and config["resume_testing_path"] != False:
+            print('Resume testing using the previous training videos..')
             train_video_path_txt = current_save_path / 'train_videos_paths.txt'
             with open(train_video_path_txt, 'r') as f:
                 train_videos_paths_ = f.readlines()
-                train_videos_paths_ = [video.strip() for video in train_videos_paths]
+            train_videos_paths_ = [video.strip() for video in train_videos_paths_]
+            print('Number of training videos from last train: ', len(train_videos_paths_))
         else:
             effective_train_videos_number = config['effective_train_videos_number']
+            print('Effective number of training videos: ', effective_train_videos_number)
             number_train_videos = len(train_videos_paths)
             if number_train_videos > effective_train_videos_number:
                 train_videos_paths_ = random.sample(train_videos_paths, effective_train_videos_number)
@@ -103,9 +109,13 @@ def main_gpt(args):
             Each sequence is presented in chronological order.
             """
         })
+        
+        num_train_frames = 0
 
         for video in train_videos_paths_:
             frames, number_frames = read_frames(video, resize) 
+            print(f'Number of frames in the training video {video}: {number_frames}')
+            num_train_frames += number_frames
             # Add the training start prompt to the prompt:
             prompt.append(
                 {
@@ -145,9 +155,9 @@ def main_gpt(args):
                 "content": labels
             })
 
-        print('In-context learning completed..\n')
+        print(f'In-context learning completed after reading {num_train_frames} training frames.')
     
-    print('Testing started..\n')
+    print('Testing started..')
     testing_videos_number = len(test_videos_paths)
     print('Number of testing videos: ', testing_videos_number)
     testing_time_start = time.time()
@@ -155,6 +165,7 @@ def main_gpt(args):
     for video in tqdm(test_videos_paths, desc="Testing videos"):
         prompt_test_index = 0
         frames, number_frames = read_frames(video, resize)
+        print(f'Number of frames in the testing video {video}: {number_frames}')
 
         # Add the system prompt to the prompt:
         prompt.append(
@@ -202,7 +213,7 @@ def main_gpt(args):
             result = client.chat.completions.create(**params)
             prediction = result.choices[0].message.content
             predictions.append(prediction)
-            time.sleep(2)
+            time.sleep(1)
         
         if num_inferences > 1:
             print('Using majority voting to select the final prediction..')
@@ -243,7 +254,7 @@ def main_gpt(args):
         for i in range(prompt_test_index):
             prompt.pop()
 
-        time.sleep(10)
+        time.sleep(5)
 
     testing_time_end = time.time()
     testing_time = testing_time_end - testing_time_start

@@ -2,6 +2,8 @@
 
 This directory contains scripts to run auto-evaluations of model generated standard operating procedures (SOPs). It contains the following:
 
+Set up your api key first 
+
 - [`eval.py`](./eval.py) - The main script used to run auto-evaluations of the model's generated SOPs against the "gold standard" SOPs.
 
 - [`metrics.py`](./metrics.py) - Contains functions to calculate various metrics for evaluating the model's generated SOPs.

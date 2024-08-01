@@ -113,8 +113,15 @@ for i, video in tqdm(enumerate(prediction_folder_videos)):
         "messages": prompt,
         "max_tokens": 500
     }
-    result = client.chat.completions.create(**params)
-    prediction = result.choices[0].message.content
+
+    # Use majority voting to get the final prediction:
+    predictions = []
+    for i in range(5):
+        result = client.chat.completions.create(**params)
+        prediction = result.choices[0].message.content
+        predictions.append(prediction)
+        time.sleep(2)
+    prediction = max(set(predictions), key=predictions.count)
     print(prediction)
     # save the cleaned prediction in the same folder as the prediction:
     # prediction_path = prediction_path.replace('predictions.txt', 'cleaned_predictions.txt')
