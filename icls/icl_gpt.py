@@ -165,96 +165,105 @@ def main_gpt(args):
     for video in tqdm(test_videos_paths, desc="Testing videos"):
         prompt_test_index = 0
         frames, number_frames = read_frames(video, resize)
-        print(f'Number of frames in the testing video {video}: {number_frames}')
 
-        # Add the system prompt to the prompt:
-        prompt.append(
-            {
-                "role": "user",
-                "content": config['prompts']['testing_example'].format(number_frames=number_frames)
-            }
-        )
-        prompt_test_index += 1
-
-        # Add the frames to the prompt:
-        images = []
-        for j in range(number_frames):
-            images.append(
-                {"type": "image_url",
-                 "image_url": {
-                     "url": f"data:image/png;base64,{frames[j]}",
-                     "detail": "high"}
-                 }
+        if number_frames > 50:
+            print(f'Number of frames in the testing video {video}: {number_frames}. Too many frames, skipping..')
+            pass
+        else:
+            print(f'Number of frames in the testing video {video}: {number_frames}')
+            # Add the system prompt to the prompt:
+            prompt.append(
+                {
+                    "role": "user",
+                    "content": config['prompts']['testing_example'].format(number_frames=number_frames)
+                }
             )
-        prompt.append({
-            "role": "user",
-            "content": images
-        })
-        prompt_test_index += 1
+            prompt_test_index += 1
 
-        # Add the question to the prompt:
-        prompt.append({
-            "role": "user",
-            "content": config['prompts']['question']
-        })
-        prompt_test_index += 1
-
-        predictions = []
-        num_inferences = config['majority_voting_candidates']
-        
-        for n in range(num_inferences):
-            params = {
-                "model": config['model_name'],
-                "messages": prompt,
-                "max_tokens": int(config['max_tokens']),
-                "temperature": config['temperature_majority_voting'],
-                "top_p": config['top_p_majority_voting']
-            }
-            result = client.chat.completions.create(**params)
-            prediction = result.choices[0].message.content
-            predictions.append(prediction)
-            time.sleep(1)
-        
-        if num_inferences > 1:
-            print('Using majority voting to select the final prediction..')
-            initial_prediction = majority_vote(predictions)
-        else:
-            initial_prediction = predictions[0]
-
-        if config['use_self_reflect'] and config['use_self_reflect'] == True:
-            print('Using self-reflection to refine the prediction..')
-            reflection_prompt = prompt.copy()
-            reflection_prompt.append({
+            # Add the frames to the prompt:
+            images = []
+            for j in range(number_frames):
+                images.append(
+                    {"type": "image_url",
+                    "image_url": {
+                        "url": f"data:image/png;base64,{frames[j]}",
+                        "detail": "high"}
+                    }
+                )
+            prompt.append({
                 "role": "user",
-                "content": config['prompts']['reflection'].format(initial_prediction=initial_prediction)
+                "content": images
             })
-            
-            reflection_params = {
-                "model": config['model_name'],
-                "messages": reflection_prompt,
-                "max_tokens": int(config['max_tokens']),
-                "temperature": config['temperature_self_reflect'],
-                "top_p": config['top_p_self_reflect']
-            }
-            
-            reflection_result = client.chat.completions.create(**reflection_params)
-            final_prediction = reflection_result.choices[0].message.content
-        else:
-            final_prediction = initial_prediction
-        
-        video_name = video.split('/')[-3:]
-        video_name = '/'.join(video_name)
-        video_save_path = Path(current_save_path) / video_name
-        video_save_path.mkdir(parents=True, exist_ok=True)
-        print('Testing on video: ', video)
-        save_path = video_save_path / 'label_prediction.txt'
-        with open(save_path, 'w') as f:
-            f.write(final_prediction)
-        
-        for i in range(prompt_test_index):
-            prompt.pop()
+            prompt_test_index += 1
 
-        time.sleep(5)
+            # Add the question to the prompt:
+            prompt.append({
+                "role": "user",
+                "content": config['prompts']['question']
+            })
+            prompt_test_index += 1
+
+            predictions = []
+            num_inferences = config['majority_voting_candidates']
+            
+            for n in range(num_inferences):
+                params = {
+                    "model": config['model_name'],
+                    "messages": prompt,
+                    "max_tokens": int(config['max_tokens']),
+                    "temperature": config['temperature_majority_voting'],
+                    "top_p": config['top_p_majority_voting']
+                }
+                result = client.chat.completions.create(**params)
+                prediction = result.choices[0].message.content
+                predictions.append(prediction)
+                time.sleep(1)
+            
+            if num_inferences > 1:
+                print('Using majority voting to select the final prediction..')
+                initial_prediction = majority_vote(predictions)
+            else:
+                initial_prediction = predictions[0]
+
+            if config['use_self_reflect'] and config['use_self_reflect'] == True:
+                print('Using self-reflection to refine the prediction..')
+                reflection_prompt = prompt.copy()
+                reflection_prompt.append({
+                    "role": "user",
+                    "content": config['prompts']['reflection'].format(initial_prediction=initial_prediction)
+                })
+                
+                reflection_params = {
+                    "model": config['model_name'],
+                    "messages": reflection_prompt,
+                    "max_tokens": int(config['max_tokens']),
+                    "temperature": config['temperature_self_reflect'],
+                    "top_p": config['top_p_self_reflect']
+                }
+                
+                reflection_result = client.chat.completions.create(**reflection_params)
+                final_prediction = reflection_result.choices[0].message.content
+            else:
+                final_prediction = initial_prediction
+            
+            video_name = video.split('/')[-3:]
+            video_name = '/'.join(video_name)
+            video_save_path = Path(current_save_path) / video_name
+            video_save_path.mkdir(parents=True, exist_ok=True)
+            print('Testing on video: ', video)
+            save_path = video_save_path / 'label_prediction.txt'
+            with open(save_path, 'w') as f:
+                f.write(final_prediction)
+            
+            for i in range(prompt_test_index):
+                prompt.pop()
+            
+            # save the prompt for comparisons:
+            # prompt_save_path = video_save_path / 'prompt.txt' 
+            # with open(prompt_save_path, 'w') as f:
+            #     yaml.dump(prompt, f)
+
+            time.sleep(5)
 
     testing_time_end = time.time()
     testing_time = testing_time_end - testing_time_start

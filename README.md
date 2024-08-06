@@ -115,7 +115,7 @@ Please review the screenshots and their prediction. Provide an improved version 
 ## Evaluation
 In the subfolder called evals, change the parameters in the evals.py first. Set up the api key then run the eval.py.
 ```
-export OPEN_API_KEY="some-some-key"
+export OPENAI_API_KEY="some-some-key"
 python evals/eval.py
 ```
 
