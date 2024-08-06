@@ -2,7 +2,7 @@ model_name: "gpt-4o" # gpt-4o-mini
 api_key: sk-proj-ZxH9n4f7EHjWlCBo0bdjT3BlbkFJzpfDqdqNHisk1b56DZoM # Ask Sam for your api key
 train_screenshots_txt: ../../../data/split/Wonderbread/1721311190.047799/training_data_batches/batch_0.txt # change this to your own path
 test_screenshots_txt: ../../../data/split/Wonderbread/1721311190.047799/testing/screenshots.txt # change this to your own path
-resume_testing_path: 
+resume_testing_path: ../../../results/1722520086/Wonderbread/gold_demos
 save_path: ../../../results # change this to your own path
 max_tokens: 4096 # largest limit is 4096 for gpt4o
 effective_train_videos_number: 10

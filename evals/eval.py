@@ -186,19 +186,27 @@ def add_gold_sops(df_all_results: pd.DataFrame, path_to_demos_dir: str) -> pd.Da
 
 
 if __name__ == "__main__":
-
+    
+    # ==========================================================================================
     # Change here:
-    predictions_folder = "/home/moucheng/results/1721919139_old/Wonderbread/gold_demos"
+    # ==========================================================================================
+    # set up openai api key in terminal:
+    # export OPENAI_API_KEY="sk-proj-ZxH9n4f7EHjWlCBo0bdjT3BlbkFJzpfDqdqNHisk1b56DZoM"
+    predictions_folder = "/home/moucheng/results/1722520086/Wonderbread/gold_demos" # icl
+    # predictions_folder = "/home/moucheng/results/1722441353/Wonderbread/gold_demos" # baseline
     gt_folder = "/home/moucheng/data/Wonderbread/gold_demos"
     task_name = "Wonderbread_gold_demos"
     ablation = "gpt4o_base"
-    # set up openai api key
-    # OPEN_API_KEY = "sk-proj-ZxH9n4f7EHjWlCBo0bdjT3BlbkFJzpfDqdqNHisk1b56DZoM"
-    
+    test_no = 150
+    # ==========================================================================================
+    # ==========================================================================================
+
     # Get all videos from predictions folder
     all_videos = os.listdir(predictions_folder)  
-    # for debug:
-    # all_videos = all_videos[:2]
+    all_videos.sort()
+
+    if test_no is not None:
+        all_videos = all_videos[:test_no]
     
     # Create list to store collected SOP pairs
     sops = []
@@ -213,6 +221,8 @@ if __name__ == "__main__":
             pred_sop = f.read()
         # remove first line in gold_sop:
         gold_sop = "\n".join(gold_sop.split("\n")[1:])
+        # remove the last line in pred_sop:
+        # pred_sop = "\n".join(pred_sop.split("\n")[:-1])
         # Add an instance with rank_2 as the pred_sop and rank_1 as the gold_sop
         video = video.replace("@", "")
         video = video.replace(" ", "-") 
@@ -227,10 +237,16 @@ if __name__ == "__main__":
         )
 
     results = evaluate_sops(list_of_sops=sops, experiment_name=task_name)
-    print(results)
 
     # save the results csv into the prediction_folder:
     save_folder = "/".join(predictions_folder.split("/")[:-2])
+    # make a subfolder called evals + timestamp:
+    import time
+    time = int(time.time())
+    save_folder = os.path.join(save_folder, "evals" + str(time) + "_t" + str(test_no))
+    os.makedirs(save_folder, exist_ok=True)
+    # sort the results by demo_name:
+    results = results.sort_values(by="demo_name")
     results.to_csv(os.path.join(save_folder, "results_evals_full.csv"), index=False)
 
     # from results only get columns: demo_name, ablation, precision, recall, ordering:
@@ -244,6 +260,9 @@ if __name__ == "__main__":
     results.loc[len(results)-1, "recall"] = results["recall"].mean()
     results.loc[len(results)-1, "ordering"] = results["ordering"].mean()
     results.to_csv(os.path.join(save_folder, "results_evals_simple.csv"), index=False)
+
+    # print the results:
+    print(results)
 
     # # For each folder in the example_sops directory
     # for folder in os.listdir("./example_sops"):
