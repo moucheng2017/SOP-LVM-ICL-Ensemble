@@ -41,6 +41,11 @@ def main_gpt(args):
 
     train_videos_paths = [path.rsplit('/', 1)[0] for path in train_screenshots_paths]
     test_videos_paths = [path.rsplit('/', 1)[0] for path in test_screenshots_paths]
+
+    if config.get("effective_test_videos_number") and config["effective_test_videos_number"] != None and config["effective_test_videos_number"] != False:
+        target_test_videos_number = config["effective_test_videos_number"]
+        test_videos_paths = test_videos_paths[:target_test_videos_number]
+        print('Number of effective test videos: ', len(test_videos_paths))
     
     # Save the used config
     # if config.get("resume_testing_path") and config["resume_testing_path"] != None and config["resume_testing_path"] != False:
@@ -50,7 +55,7 @@ def main_gpt(args):
         tested_videos = os.listdir(current_save_path)
         print('Number of tested videos: ', len(tested_videos)) 
         all_test_videos = [video.rsplit('/', 1)[1] for video in test_videos_paths]
-        print('Number of all test videos: ', len(all_test_videos))
+        print('Number of effective test videos: ', len(all_test_videos))
         test_videos_parent_path = Path(test_videos_paths[0]).parent
         untested_videos = [video for video in all_test_videos if video not in tested_videos]
         test_videos_paths = [os.path.join(test_videos_parent_path, video) for video in untested_videos]

@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # Define the command to run the experiment
-experiment_cmd="python main.py --config configs/wonderbread.yml"
+experiment_cmd="python main.py --config configs/wonderbread_icl.yml"
 
 # Run the experiment in a loop until it finishes successfully
 while true; do
