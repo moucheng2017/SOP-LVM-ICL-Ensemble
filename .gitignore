@@ -1,4 +1,6 @@
 # Virtual environment
+data/
+
 env/
 dir/env/
 
