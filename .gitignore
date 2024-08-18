@@ -33,6 +33,7 @@ evals/sop_cache/
 
 # results:
 evals/dummy_debug_eval_results.csv
+results/
 
 # Data
 data/

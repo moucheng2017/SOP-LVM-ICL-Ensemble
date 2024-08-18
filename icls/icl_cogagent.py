@@ -8,7 +8,7 @@ from io import BytesIO
 import torch
 from PIL import Image
 from tqdm import tqdm
-from transformers import AutoModelForCausalLM, LlamaTokenizer
+from transformers import AutoModelForCausalLM, BitsAndBytesConfig, LlamaTokenizer
 
 import helpers
 
@@ -36,8 +36,10 @@ def load_cogagent(config) -> tuple[AutoModelForCausalLM, LlamaTokenizer]:
         model_name,
         torch_dtype=_get_torch_type(),
         low_cpu_mem_usage=True,
-        load_in_4_bit=quant == 4,
-        load_in_8_bit=quant == 8,
+        quantization_config=BitsAndBytesConfig(
+            load_in_4bit=quant == 4,
+            load_in_8bit=quant == 8,
+        ),
         trust_remote_code=True,
         device_map="auto",
     ).eval()
@@ -52,8 +54,8 @@ def openai_messages_to_cogagent(messages):
     last_user_query = ""
 
     for i, message in enumerate(messages):
-        role = message.role
-        content = message.content
+        role = message["role"]
+        content = message["content"]
 
         if isinstance(content, list):  # text
             text_content = " ".join(
@@ -65,7 +67,7 @@ def openai_messages_to_cogagent(messages):
         if isinstance(content, list):  # image
             for item in content:
                 if item["type"] == "image_url":
-                    image_url = item.image_url.url
+                    image_url = item["image_url"]["url"]
                     if image_url.startswith("data:image/jpeg;base64,"):
                         base64_encoded_image = image_url.split(
                             "data:image/jpeg;base64,"
@@ -74,7 +76,7 @@ def openai_messages_to_cogagent(messages):
                         image = Image.open(BytesIO(image_data)).convert("RGB")
                         image_list.append(image)
 
-        if role == "user":
+        if role == "user" or role == "system":
             if i == len(messages) - 1:
                 last_user_query = text_content
             else:
@@ -160,7 +162,7 @@ def main_cogagent(args):
     train_videos_paths = [path.rsplit("/", 1)[0] for path in train_screenshots_paths]
     test_videos_paths = [path.rsplit("/", 1)[0] for path in test_screenshots_paths]
 
-    if config["resume_testing_path"] is not None and config["resume_testing_path"]:
+    if "resume_testing_path" in config and config["resume_testing_path"]:
         print("Resuming testing..")
         current_save_path = config["resume_testing_path"]
         tested_videos = os.listdir(current_save_path)
@@ -196,9 +198,9 @@ def main_cogagent(args):
 
     if config["in_context_learning"]:
         print("Using in-context learning..")
-        random.seed(args.seed)
+        random.seed(config["seed"])
 
-        if config["resume_testing_path"] is not None and config["resume_testing_path"]:
+        if "resume_testing_path" in config and config["resume_testing_path"]:
             print("Resume testing using the previous training videos..")
             train_video_path_txt = current_save_path / "train_videos_paths.txt"
             with open(train_video_path_txt, "r") as f:
