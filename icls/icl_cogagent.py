@@ -114,11 +114,13 @@ def inference_cogagent(
         "input_ids": input_by_model["input_ids"].unsqueeze(0).to(DEVICE),
         "token_type_ids": input_by_model["token_type_ids"].unsqueeze(0).to(DEVICE),
         "attention_mask": input_by_model["attention_mask"].unsqueeze(0).to(DEVICE),
-        "images": [[input_by_model["images"][0].to(DEVICE).to(torch_type)]],
+        "images": [
+            image.to(DEVICE).to(torch_type) for image in input_by_model["images"]
+        ],
     }
     if "cross_images" in input_by_model and input_by_model["cross_images"]:
         inputs["cross_images"] = [
-            [input_by_model["cross_images"][0].to(DEVICE).to(torch_type)]
+            image.to(DEVICE).to(torch_type) for image in input_by_model["cross_images"]
         ]
 
     gen_kwargs = {
@@ -326,10 +328,10 @@ def main_cogagent(args):
 
             for _ in range(num_inferences):
                 params = {
-                    "max_tokens": int(config['max_tokens']),
-                    "temperature": config['temperature_majority_voting'],
-                    "top_p": config['top_p_majority_voting'],
-                    "repetition_penalty": config["repetition_penalty_majority_voting"]
+                    "max_tokens": int(config["max_tokens"]),
+                    "temperature": config["temperature_majority_voting"],
+                    "top_p": config["top_p_majority_voting"],
+                    "repetition_penalty": config["repetition_penalty_majority_voting"],
                 }
                 prediction = inference_cogagent(model, tokeinzer, prompt, **params)
                 predictions.append(prediction)
@@ -359,7 +361,9 @@ def main_cogagent(args):
                     "top_p": config["top_p_self_reflect"],
                     "repetition_penalty": config["repetition_penalty_reflect"],
                 }
-                final_prediction = inference_cogagent(model, tokeinzer, reflection_prompt, **reflection_params)
+                final_prediction = inference_cogagent(
+                    model, tokeinzer, reflection_prompt, **reflection_params
+                )
             else:
                 final_prediction = initial_prediction
 
