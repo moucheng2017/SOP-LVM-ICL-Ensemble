@@ -5,7 +5,7 @@ from icls.icl_gpt import main_gpt
 # from icl_gemini import main_gemini
 # from icl_claude import main_claude
 # from icl_llama import main_llama
-# from icl_cogagent import main_cogagent
+from icls.icl_cogagent import main_cogagent
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
@@ -16,5 +16,6 @@ if __name__ == "__main__":
     if 'gpt' in config['model_name'] or 'GPT' in config['model_name']:
         main_gpt(args)
     
-
-
+    if 'cog' in config['model_name']:
+        main_cogagent(args)
+    
