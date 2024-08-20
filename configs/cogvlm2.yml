@@ -1,13 +1,12 @@
-model_name: THUDM/cogagent-chat-hf
-tokenizer: lmsys/vicuna-7b-v1.5
+model_name: THUDM/cogvlm2-video-llama3-chat
 # TODO actual paths for train / test
-train_screenshots_txt: data/split/demos/1723995413.0489748/training/screenshots.txt
-test_screenshots_txt: data/split/demos/1723995413.0489748/testing/screenshots.txt
-train_labels_txt: data/split/demos/1723995413.0489748/training/labels.txt
+train_screenshots_txt: data/split/data/1724169424.8096473/training/screenshots.txt
+test_screenshots_txt: data/split/data/1724169424.8096473/testing/screenshots.txt
+train_labels_txt: data/split/data/1724169424.8096473/training/labels.txt
 # resume_testing_path: results/1722441353/Wonderbread/debug_demos
 save_path: results
 max_tokens: 4096 # normally less than 4000
-in_context_learning: true # flag to use in context learning for fine tuning
+in_context_learning: false # flag to use in context learning for fine tuning
 effective_train_videos_number: 10
 temperature_majority_voting: 0.5 # normally less than 1
 temperature_self_reflect: 0.1 # normally less than 1
@@ -16,7 +15,7 @@ top_p_self_reflect: 0.9 # normally less than 1
 repetition_penalty_majority_voting: 1.0
 repetition_penalty_self_reflect: 1.0
 majority_voting_candidates: 1 # number of candidates for majority voting, if it is 1, it will not use majority voting
-image_resize: [1120, 1120] # [width, height]
+image_resize: [224, 224] # [width, height]
 use_self_reflect: false # when used, it will use the self-reflect mechanism
 debug_mode: true # when used, it will only test on the last video of the testing videos
 quant: 8 # 4, 8 or commented out

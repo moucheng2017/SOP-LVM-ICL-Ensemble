@@ -1,6 +1,10 @@
 einops==0.8.0
+
+--extra-index-url https://download.pytorch.org/whl/cu124
 torch==2.4.0+cu124
 torchvision==0.19.0+cu124
+
+pytorchvideo @ git+https://github.com/facebookresearch/pytorchvideo.git@e02c17b480f4b2a70a000df4e1aaf9d45fdaefb5
 xformers==0.0.27.post2
 timm==1.0.8
 accelerate==0.33.0

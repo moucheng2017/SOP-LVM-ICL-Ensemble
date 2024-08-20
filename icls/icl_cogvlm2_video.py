@@ -5,10 +5,15 @@ import random
 import time
 from io import BytesIO
 
+import numpy as np
 import torch
 from PIL import Image
-from tqdm import tqdm
-from transformers import AutoModelForCausalLM, BitsAndBytesConfig, LlamaTokenizer
+from tqdm import tqdm  # type: ignore
+from transformers import (  # type: ignore
+    AutoModelForCausalLM,
+    AutoTokenizer,
+    BitsAndBytesConfig,
+)
 
 import helpers
 
@@ -25,12 +30,11 @@ def _get_torch_type():
     return torch_type
 
 
-def load_cogagent(config) -> tuple[AutoModelForCausalLM, LlamaTokenizer]:
+def load_cogvlm2(config) -> tuple[AutoModelForCausalLM, AutoTokenizer]:
     quant = config["quant"]
     assert quant in [4, 8]
-    model_name = config["model_name"] or "THUDM/cogagent-chat-hf"
+    model_name = config["model_name"] or "THUDM/cogvlm2-video-llama3-chat"
     assert "cog" in model_name
-    tokenizer_path = config["tokenizer"] or "lmsys/vicuna-7b-v1.5"
 
     model = AutoModelForCausalLM.from_pretrained(
         model_name,
@@ -43,11 +47,13 @@ def load_cogagent(config) -> tuple[AutoModelForCausalLM, LlamaTokenizer]:
         trust_remote_code=True,
         device_map="auto",
     ).eval()
-    tokenizer = LlamaTokenizer.from_pretrained(tokenizer_path, trust_remote_code=True)
+    tokenizer = AutoTokenizer.from_pretrained(
+        config["model_name"], trust_remote_code=True
+    )
     return model, tokenizer
 
 
-def openai_messages_to_cogagent(messages):
+def openai_messages_to_cogvlm2(messages):
     """Modified from https://github.com/THUDM/CogVLM/blob/main/openai_demo/openai_api.py"""
     formatted_history = []
     image_list = []
@@ -68,9 +74,9 @@ def openai_messages_to_cogagent(messages):
             for item in content:
                 if item["type"] == "image_url":
                     image_url = item["image_url"]["url"]
-                    if image_url.startswith("data:image/jpeg;base64,"):
+                    if image_url.startswith("data:image/png;base64,"):
                         base64_encoded_image = image_url.split(
-                            "data:image/jpeg;base64,"
+                            "data:image/png;base64,"
                         )[1]
                         image_data = base64.b64decode(base64_encoded_image)
                         image = Image.open(BytesIO(image_data)).convert("RGB")
@@ -98,35 +104,35 @@ def openai_messages_to_cogagent(messages):
 
 def inference_cogagent(
     model: AutoModelForCausalLM,
-    tokenizer: LlamaTokenizer,
+    tokenizer: AutoTokenizer,
     messages,
     max_tokens,
     temperature,
     top_p,
     repetition_penalty,
 ):
-    query, history, image_list = openai_messages_to_cogagent(messages)
+    query, history, image_list = openai_messages_to_cogvlm2(messages)
     DEVICE = _get_device()
     torch_type = _get_torch_type()
+    video = np.array(image_list)
+    video_tensor = torch.tensor(
+        video.transpose((3, 0, 1, 2)), dtype=torch.float32
+    )  # channel first
 
     input_by_model = model.build_conversation_input_ids(
-        tokenizer, query=query, history=history, images=image_list
+        tokenizer, query=query, history=history, images=[video_tensor]
     )
     inputs = {
         "input_ids": input_by_model["input_ids"].unsqueeze(0).to(DEVICE),
         "token_type_ids": input_by_model["token_type_ids"].unsqueeze(0).to(DEVICE),
         "attention_mask": input_by_model["attention_mask"].unsqueeze(0).to(DEVICE),
-        "images": [
-            image.to(DEVICE).to(torch_type) for image in input_by_model["images"]
-        ],
+        "images": [[input_by_model["images"][0].to(DEVICE).to(torch_type)]],
     }
-    if "cross_images" in input_by_model and input_by_model["cross_images"]:
-        inputs["cross_images"] = [
-            image.to(DEVICE).to(torch_type) for image in input_by_model["cross_images"]
-        ]
 
     gen_kwargs = {
         "max_length": int(max_tokens),  # TODO maybe max_new_tokens
+        "pad_token_id": 128002,
+        "top_k": 1,
         "temperature": temperature,
         "top_p": top_p if temperature > 1e-5 else 0,
         "do_sample": True if temperature > 1e-5 else False,
@@ -136,19 +142,19 @@ def inference_cogagent(
     with torch.no_grad():
         outputs = model.generate(**inputs, **gen_kwargs)
         outputs = outputs[:, inputs["input_ids"].shape[1] :]
-        response = tokenizer.decode(outputs[0])
+        response = tokenizer.decode(outputs[0], skip_special_tokens=True)
         response = response.split("</s>")[0]
 
     return response
 
 
-def main_cogagent(args):
+def main_cogvlm2_video(args):
     config = helpers.load_config(args.config)
     print("Configurations:")
     print(config)
 
     # Load model
-    model, tokeinzer = load_cogagent(config)
+    model, tokeinzer = load_cogvlm2(config)
 
     train_screenshots = config["train_screenshots_txt"]
     test_screenshots = config["test_screenshots_txt"]
