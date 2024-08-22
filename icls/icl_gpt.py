@@ -1,5 +1,6 @@
 import os
 import time
+import openai
 from openai import OpenAI
 from tqdm import tqdm
 from helpers import save_config, load_config, read_frames
@@ -23,6 +24,8 @@ def main_gpt(args):
         return
     else:
         API_KEY = config['api_key']
+    
+    # errors: tuple = (openai.RateLimitError,),
     
     client = OpenAI(api_key=API_KEY)
     
@@ -206,19 +209,30 @@ def main_gpt(args):
             predictions = []
             num_inferences = config['majority_voting_candidates']
             
-            for n in range(num_inferences):
-                params = {
-                    "model": config['model_name'],
-                    "messages": prompt,
-                    "max_tokens": int(config['max_tokens']),
-                    "temperature": config['temperature_majority_voting'],
-                    "top_p": config['top_p_majority_voting']
-                }
-                result = client.chat.completions.create(**params)
-                prediction = result.choices[0].message.content
-                predictions.append(prediction)
-                time.sleep(1)
-            
+            for i in range(num_inferences):
+                for attempt in range(5):
+                    try:
+                        params = {
+                            "model": config['model_name'],
+                            "messages": prompt,
+                            "max_tokens": int(config['max_tokens']),
+                            "temperature": config['temperature_majority_voting'],
+                            "top_p": config['top_p_majority_voting']
+                        }
+                        result = client.chat.completions.create(**params, timeout=60)
+                        prediction = result.choices[0].message.content
+                        predictions.append(prediction)
+                        # time.sleep(60)
+                        break
+                    except Exception as e: 
+                        # print the exception and retry after wait_time seconds:
+                        print('Exception: ', e)
+                        wait_time = 10 * (2 ** attempt)
+                        print('Retrying attempt {} after {} seconds..'.format(attempt, wait_time))
+                        time.sleep(wait_time)
+
+                raise Exception("Failed to complete API request after multiple attempts.")
+
             if num_inferences > 1:
                 print('Using majority voting to select the final prediction..')
                 initial_prediction = majority_vote(predictions)
@@ -241,8 +255,9 @@ def main_gpt(args):
                     "top_p": config['top_p_self_reflect']
                 }
                 
-                reflection_result = client.chat.completions.create(**reflection_params)
+                reflection_result = client.chat.completions.create(**reflection_params, timeout=60)
                 final_prediction = reflection_result.choices[0].message.content
+                time.sleep(60)
             else:
                 final_prediction = initial_prediction
             
@@ -258,13 +273,6 @@ def main_gpt(args):
             for i in range(prompt_test_index):
                 prompt.pop()
             
-            # save the prompt for comparisons:
-            # prompt_save_path = video_save_path / 'prompt.txt' 
-            # with open(prompt_save_path, 'w') as f:
-            #     yaml.dump(prompt, f)
-
-            time.sleep(5)
-
     testing_time_end = time.time()
     testing_time = testing_time_end - testing_time_start
     print('Testing time: ', testing_time)
