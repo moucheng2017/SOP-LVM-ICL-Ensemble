@@ -162,6 +162,9 @@ def main_gpt(args):
     print('Number of testing videos: ', testing_videos_number)
     testing_time_start = time.time()
 
+    ##
+    test_videos_paths = ["data/demos/debug_demos/494 @ 2024-01-07-17-31-39/"]
+    ##
     for video in tqdm(test_videos_paths, desc="Testing videos"):
         prompt_test_index = 0
         frames, number_frames = read_frames(video, resize)

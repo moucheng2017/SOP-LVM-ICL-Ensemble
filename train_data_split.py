@@ -11,7 +11,7 @@ from pathlib import Path
 from tqdm import tqdm
 import argparse
 
-train_txt_full = "/home/moucheng/data/split/Wonderbread/1721311190.047799/training/screenshots.txt"
+train_txt_full = "/home/lm01065/Documents/Agile_Loop/action-labelling/split/data/1723824678.9644685/training/screenshots.txt"
 exclusion_txt_full = None
 batch_size = 10
 random_seed = 42

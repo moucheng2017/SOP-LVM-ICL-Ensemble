@@ -24,6 +24,7 @@ esac
 mkdir -p data/demos && pushd data/demos
 wget "$LINK"
 unzip "$FILENAME" && rm "$FILENAME"
+mkdir -p "$DIRNAME"
 mv "$DIRNAME/*" . && rmdir "$DIRNAME" 
 popd
 
