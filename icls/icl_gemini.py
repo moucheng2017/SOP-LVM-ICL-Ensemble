@@ -113,7 +113,7 @@ def main_gemini(args):
         num_train_frames = 0
 
         for video in train_videos_paths_:
-            frames, number_frames = read_frames(video, resize) 
+            frames, number_frames = read_frames(video, resize) # NOTE: This is not the method recommended by the Gemini documentation
             print(f'Number of frames in the training video {video}: {number_frames}')
             num_train_frames += number_frames
             # Add the training start prompt to the prompt:
@@ -188,16 +188,10 @@ def main_gemini(args):
             for j in range(number_frames):
                 images.append(frames[j])
 
-                # images.append(
-                #     {"type": "image_url",
-                #     "image_url": {
-                #         "url": f"data:image/png;base64,{frames[j]}",
-                #         "detail": "high"}
-                #     }
-                # )
+            # NOTE: May be worth investigasting if converting list to string is what Gemini wants for multiple images
             prompt.append({
                 "role": "user",
-                "parts": str(images[:9]) ## Make sure to remove this 0 thing
+                "parts": str(images[:9]) ## Control the number of images added to the input
             })
             prompt_test_index += 1
 
