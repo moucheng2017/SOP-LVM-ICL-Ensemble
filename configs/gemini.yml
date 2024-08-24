@@ -20,7 +20,7 @@ repetition_penalty_self_reflect: 1.0
 majority_voting_candidates: 1 # number of candidates for majority voting, if it is 1, it will not use majority voting
 image_resize: [1024, 768] # [width, height]
 use_self_reflect: false # when used, it will use the self-reflect mechanism
-debug_mode: true # when used, it will only test on the last video of the testing videos
+debug_mode: false # when used, it will only test on the last video of the testing videos
 quant: 8
 seed: 42
 prompts: 
