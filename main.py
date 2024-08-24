@@ -8,6 +8,7 @@ from helpers import load_config
 # from icl_llama import main_llama
 from icls.icl_cogvlm2_video import main_cogvlm2_video
 from icls.icl_gpt import main_gpt
+from icls.icl_phi3_5 import main_phi3_5
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
@@ -15,8 +16,11 @@ if __name__ == "__main__":
     args = parser.parse_args()
 
     config = load_config(args.config)
-    if "gpt" in config["model_name"] or "GPT" in config["model_name"]:
+    if "gpt" in config["model_name"].lower():
         main_gpt(args)
 
-    if "cog" in config["model_name"]:
+    if "cog" in config["model_name"].lower():
         main_cogvlm2_video(args)
+
+    if "phi" in config["model_name"].lower():
+        main_phi3_5(args)
