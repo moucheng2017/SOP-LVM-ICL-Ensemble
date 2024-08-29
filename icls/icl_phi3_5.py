@@ -97,7 +97,8 @@ def inference_phi3_5(
     messages,
     max_new_tokens: int,
     temperature: float,
-    top_p,
+    top_p: float,
+    repetition_penalty: float,
 ):
     processed_messages, images = openai_messages_to_phi3_5(messages)
     DEVICE = _get_device()
@@ -109,10 +110,10 @@ def inference_phi3_5(
 
     gen_kwargs = {
         "max_new_tokens": int(max_new_tokens),
-        "top_k": 1,
         "temperature": temperature,
-        "top_p": top_p if temperature > 1e-5 else 0,
-        "do_sample": True if temperature > 1e-5 else False,
+        "top_p": top_p,
+        "do_sample": True,
+        # "repetition_penalty": repetition_penalty,
     }
 
     with torch.no_grad():
@@ -318,6 +319,7 @@ def main_phi3_5(args):
                     "max_new_tokens": int(config["max_new_tokens"]),
                     "temperature": config["temperature_majority_voting"],
                     "top_p": config["top_p_majority_voting"],
+                    "repetition_penalty": config["repetition_penalty_majority_voting"],
                 }
                 prediction = inference_phi3_5(model, tokeinzer, prompt, **params)
                 predictions.append(prediction)
@@ -345,6 +347,7 @@ def main_phi3_5(args):
                     "max_new_tokens": int(config["max_new_tokens"]),
                     "temperature": config["temperature_self_reflect"],
                     "top_p": config["top_p_self_reflect"],
+                    "repetition_penalty": config["repetition_penalty_self_reflect"],
                 }
                 final_prediction = inference_phi3_5(
                     model, tokeinzer, reflection_prompt, **reflection_params
