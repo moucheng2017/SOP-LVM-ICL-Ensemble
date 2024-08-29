@@ -3,28 +3,30 @@ if [ $# -eq 0 ]; then
     exit 1
 fi
 
-case "$1" in 
-    "full")
-        LINK=https://zenodo.org/records/12671568/files/demos.zip
-        FILENAME=demos.zip
-        DIRNAME=demos
-        ;;
-    "gold")
-        LINK=https://zenodo.org/records/12671568/files/gold_demos.zip
-        FILENAME=gold_demos.zip
-        DIRNAME=gold_demos
-        ;;
-    "debug")
-        LINK=https://zenodo.org/records/12671568/files/debug_demos.zip
-        FILENAME=debug_demos.zip
-        DIRNAME=debug_demos
-        ;;
+case "$1" in
+"full")
+    LINK=https://zenodo.org/records/12671568/files/demos.zip
+    FILENAME=demos.zip
+    DIRNAME=demos
+    ;;
+"gold")
+    LINK=https://zenodo.org/records/12671568/files/gold_demos.zip
+    FILENAME=gold_demos.zip
+    DIRNAME=gold_demos
+    ;;
+"debug")
+    LINK=https://zenodo.org/records/12671568/files/debug_demos.zip
+    FILENAME=debug_demos.zip
+    DIRNAME=debug_demos
+    ;;
 esac
 
 mkdir -p data/demos && pushd data/demos
 wget "$LINK"
-unzip "$FILENAME" && rm "$FILENAME"
-mv "$DIRNAME/*" . && rmdir "$DIRNAME" 
+UNZIP_DISABLE_ZIPBOMB_DETECTION=TRUE unzip "$FILENAME"
+# pushd "$DIRNAME" && mv ./* ../
+# popd && rmdir "$DIRNAME"
+rm "$FILENAME"
 popd
 
 echo "Finished downloading the wonderbread $FILENAME split and extracted it into data/demos"
