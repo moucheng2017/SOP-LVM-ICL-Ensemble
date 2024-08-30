@@ -4,6 +4,7 @@ import pathlib
 import random
 import time
 from io import BytesIO
+import gc
 
 import torch
 from PIL import Image
@@ -21,14 +22,6 @@ def _get_device():
     return "cuda" if torch.cuda.is_available() else "cpu"
 
 
-def _get_torch_type():
-    if torch.cuda.is_available() and torch.cuda.get_device_capability()[0] >= 8:
-        torch_type = torch.bfloat16
-    else:
-        torch_type = torch.float16
-    return torch_type
-
-
 def load_phi3_5(config) -> tuple[AutoModelForCausalLM, AutoProcessor]:
     quant = config.get("quant", 0)
     assert quant in [0, 4, 8]
@@ -37,8 +30,7 @@ def load_phi3_5(config) -> tuple[AutoModelForCausalLM, AutoProcessor]:
 
     model = AutoModelForCausalLM.from_pretrained(
         model_name,
-        torch_dtype=_get_torch_type(),
-        low_cpu_mem_usage=True,
+        torch_dtype="auto",
         quantization_config=BitsAndBytesConfig(
             load_in_4bit=quant == 4,
             load_in_8bit=quant == 8,
@@ -118,7 +110,11 @@ def inference_phi3_5(
 
     with torch.no_grad():
         outputs = model.generate(
-            **inputs, eos_token_id=processor.tokenizer.eos_token_id, **gen_kwargs
+            **inputs,
+            eos_token_id=processor.tokenizer.eos_token_id,
+            **gen_kwargs,
+            # cache_implementation="quantized",
+            # cache_config={"backend": "quanto", "nbits": 4},
         )
         outputs = outputs[:, inputs["input_ids"].shape[1] :]
         response = processor.batch_decode(
@@ -322,8 +318,9 @@ def main_phi3_5(args):
                     "repetition_penalty": config["repetition_penalty_majority_voting"],
                 }
                 prediction = inference_phi3_5(model, tokeinzer, prompt, **params)
+                gc.collect()
+                torch.cuda.empty_cache()
                 predictions.append(prediction)
-                time.sleep(1)
 
             if num_inferences > 1:
                 print("Using majority voting to select the final prediction..")
@@ -366,8 +363,6 @@ def main_phi3_5(args):
 
             for _ in range(prompt_test_index):
                 prompt.pop()
-
-            time.sleep(5)
 
     testing_time_end = time.time()
     testing_time = testing_time_end - testing_time_start
