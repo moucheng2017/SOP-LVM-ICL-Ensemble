@@ -2,7 +2,7 @@ import os
 import time
 from google.generativeai.types import GenerationConfigType
 from tqdm import tqdm
-from helpers import save_config, load_config, read_frames
+from helpers import save_config, load_config, read_frames, get_screenshots
 from helpers import read_labels, majority_vote, prediction_template
 from helpers import read_paths_from_txt, check_videos_paths
 import yaml
@@ -14,6 +14,8 @@ import cv2
 import sys
 import google.generativeai as genai
 from google.generativeai.types.generation_types import GenerationConfig
+from IPython.display import Image
+from IPython.core.display import HTML
 
 def main_gemini(args):
     config = load_config(args.config)
@@ -73,11 +75,11 @@ def main_gemini(args):
     else:
         pass
         # print('Testing on all videos.')
-
-    prompt = [{
-        "role": "system",
-        "parts": config['prompts']['system']
-    }]
+    prompt = []
+    # prompt = [{
+    #     "role": "system",
+    #     "parts": str(config['prompts']['system'])
+    # }]
 
     if config["in_context_learning"] == True: 
         print('Using in-context learning..')
@@ -120,24 +122,24 @@ def main_gemini(args):
             prompt.append(
                 {
                     "role": "user",
-                    "parts": config['prompts']['training_example']
+                    "parts": str(config['prompts']['training_example'])
                 }
             )
 
             # Add the frames to the prompt:
-            images = []
-            for j in range(number_frames):
-                images.append(
-                    {"type": "image_url",
-                    "image_url": {
-                        "url": f"data:image/png;base64,{frames[j]}",
-                        "detail": "high"}
-                    }
-                )
-            prompt.append(
-                {"role": "user",
-                "parts": images}
-            )
+            # images = []
+            # for j in range(number_frames):
+            #     images.append(
+            #         {"type": "image_url",
+            #         "image_url": {
+            #             "url": f"data:image/png;base64,{frames[j]}",
+            #             "detail": "high"}
+            #         }
+            #     )
+            # prompt.append(
+            #     {"role": "user",
+            #     "parts": str(images)}
+            # )
 
             # Add the labels to the prompt:
             labels = read_labels(video)
@@ -148,55 +150,56 @@ def main_gemini(args):
             # remove empty lines: 
             labels = [line for line in labels if line.strip() != '']
             labels = '\n'.join(labels)
-            labels_header = "The above screenshots have SOP labels as follows:\n"
+            labels_header = "the above screenshots have sop labels as follows:\n"
             labels = labels_header + labels
             prompt.append({
                 "role": "user",
-                "parts": labels
+                "parts": str(labels)
             })
 
-        print(f'In-context learning completed after reading {num_train_frames} training frames.')
+        print(f'in-context learning completed after reading {num_train_frames} training frames.')
     
-    print('Testing started..')
+    print('testing started..')
     testing_videos_number = len(test_videos_paths)
-    print('Number of testing videos: ', testing_videos_number)
+    print('number of testing videos: ', testing_videos_number)
     testing_time_start = time.time()
 
     # test_videos_paths = ["data/demos/debug_demos/494 @ 2024-01-07-17-31-39/"]
-    for video in tqdm(test_videos_paths, desc="Testing videos"):
+    for video in tqdm(test_videos_paths, desc="testing videos"):
         prompt_test_index = 0
         frames, number_frames = read_frames(video, resize)
 
         if number_frames > 50:
-            print(f'Number of frames in the testing video {video}: {number_frames}. Too many frames, skipping..')
+            print(f'number of frames in the testing video {video}: {number_frames}. too many frames, skipping..')
             pass
         else:
-            print(f'Number of frames in the testing video {video}: {number_frames}')
-            # Add the system prompt to the prompt:
+            print(f'number of frames in the testing video {video}: {number_frames}')
+            # add the system prompt to the prompt:
             prompt.append(
                 {
                     "role": "user",
-                    "parts": config['prompts']['testing_example'].format(number_frames=number_frames)
+                    "parts": str(config['prompts']['testing_example'].format(number_frames=number_frames))
                 }
             )
             prompt_test_index += 1
 
-            # Add the frames to the prompt:
-            images = []
-            for j in range(number_frames):
-                images.append(frames[j])
+            # add the frames to the prompt:
+            # for j in range(number_frames):
+                # images.append(frames[j]
 
-            # NOTE: May be worth investigasting if converting list to string is what Gemini wants for multiple images
-            prompt.append({
-                "role": "user",
-                "parts": str(images[:9]) ## Control the number of images added to the input
-            })
+            screenshots, screenshots_folder_path = get_screenshots(video)
+
+            # note: may be worth investigasting if converting list to string is what gemini wants for multiple images
+            # prompt.append({
+            #     "role": "user",
+            #     "parts": str(images[:9]) ## control the number of images added to the input
+            # })
             prompt_test_index += 1
 
-            # Add the question to the prompt:
+            # add the question to the prompt:
             prompt.append({
                 "role": "user",
-                "parts": config['prompts']['question']
+                "parts": str(config['prompts']['question'])
             })
             prompt_test_index += 1
 
@@ -211,14 +214,27 @@ def main_gemini(args):
                     "temperature": config['temperature_majority_voting'],
                     "top_p": config['top_p_majority_voting']
                 }
+
+                # Set up Gemini model
                 genai.configure(api_key=API_KEY)
-                model = genai.GenerativeModel('gemini-1.5-flash',
-                    system_instruction=prompt[0]["parts"])
-                chat = model.start_chat(
-                        history=prompt[1:4]
-                )
+                try:
+                    model = genai.GenerativeModel('gemini-1.5-flash', system_instruction=str(config['prompts']['system'])
+)
+                except:
+                    breakpoint()
+
+                images = []
+                for i, img in enumerate(screenshots):
+                    img_path = screenshots_folder_path + "/" + img
+                    print(f">> Uploading: {img_path} at {-(i+1)}") # insert images into prompt
+                    # f = {"role":"user", "parts":  [Image(url=img_path)] }#genai.upload_file(img_path)}#
+                    f = {"role":"user", "parts":  [genai.upload_file(img_path)] }
+                    prompt.insert(-(i+1), f)
+
+                # prompt = prompt[1:]
+                chat = model.start_chat(history=prompt)
                 print("Message:",prompt[-1]["parts"])
-                response = chat.send_message(prompt[-1]["parts"])
+                response = chat.send_message(str(prompt[-1]["parts"]))
                 # conf = GenerationConfig(temperature=config["temperature"])
                 # response = model.generate_parts(prompt)
                 print("Response:", response.text)
@@ -240,7 +256,7 @@ def main_gemini(args):
                 reflection_prompt = prompt.copy()
                 reflection_prompt.append({
                     "role": "user",
-                    "parts": config['prompts']['reflection'].format(initial_prediction=initial_prediction)
+                    "parts": str(config['prompts']['reflection'].format(initial_prediction=initial_prediction))
                 })
                 
                 reflection_params = {
