@@ -1,5 +1,7 @@
 # Virtual environment
 env/
+split/
+data/
 .env/
 .venv/
 dir/env/
