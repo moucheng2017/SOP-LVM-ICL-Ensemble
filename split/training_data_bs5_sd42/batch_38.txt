@@ -1,5 +1,0 @@
-/home/moucheng/projects/screen_action_labels/data/Wonderbread/gold_demos/282 @ 2024-02-02-11-50-09/screenshots
-/home/moucheng/projects/screen_action_labels/data/Wonderbread/gold_demos/386 @ 2024-01-01-22-01-55/screenshots
-/home/moucheng/projects/screen_action_labels/data/Wonderbread/gold_demos/585 @ 2024-01-01-23-00-29/screenshots
-/home/moucheng/projects/screen_action_labels/data/Wonderbread/gold_demos/47 @ 2024-01-05-04-05-09/screenshots
-/home/moucheng/projects/screen_action_labels/data/Wonderbread/gold_demos/677 @ 2024-01-04-20-59-07/screenshots

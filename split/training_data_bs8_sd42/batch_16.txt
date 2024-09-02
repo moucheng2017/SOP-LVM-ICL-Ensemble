@@ -1,8 +1,0 @@
-/home/moucheng/projects/screen_action_labels/data/Wonderbread/gold_demos/480 @ 2024-01-06-21-55-58/screenshots
-/home/moucheng/projects/screen_action_labels/data/Wonderbread/gold_demos/483 @ 2023-12-26-09-27-35/screenshots
-/home/moucheng/projects/screen_action_labels/data/Wonderbread/gold_demos/648 @ 2024-01-01-20-12-53/screenshots
-/home/moucheng/projects/screen_action_labels/data/Wonderbread/gold_demos/203 @ 2023-12-31-16-27-59/screenshots
-/home/moucheng/projects/screen_action_labels/data/Wonderbread/gold_demos/5 @ 2024-01-08-17-12-24/screenshots
-/home/moucheng/projects/screen_action_labels/data/Wonderbread/gold_demos/203 @ 2024-01-13-06-37-19/screenshots
-/home/moucheng/projects/screen_action_labels/data/Wonderbread/gold_demos/770 @ 2024-01-05-01-26-55/screenshots
-/home/moucheng/projects/screen_action_labels/data/Wonderbread/gold_demos/44 @ 2023-12-25-22-10-57/screenshots

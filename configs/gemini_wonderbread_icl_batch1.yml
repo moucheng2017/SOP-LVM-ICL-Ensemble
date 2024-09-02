@@ -1,21 +1,22 @@
 resume_testing_path: false
 model_name: "gemini-1.5-flash"
-api_key: AIzaSyDlxCnNI6feVTbRfnVJ-JXMGXeJ3dx4s6c # Ask Sam for your api key
+# api_key: AIzaSyDlxCnNI6feVTbRfnVJ-JXMGXeJ3dx4s6c # Ask Sam for your api key
+api_key: AIzaSyB-C03Bpnyj5hL5DN64TyNU9sqCYNAfoWk
 # train_screenshots_txt: ./data/training/screenshots_pc.txt
 # test_screenshots_txt: ./data/testing/screenshots_pc.txt
 # train_labels_txt: data/split/demos/1723824678.9644685/training/labels.txt
-train_screenshots_txt: /home/moucheng/projects/screen_action_labels/data/split/Wonderbread/1723811870.4719887/training_data_bs8_sd42/batch_0.txt
+train_screenshots_txt: /home/moucheng/projects/screen_action_labels/data/split/Wonderbread/1723811870.4719887/training_data_bs8_sd42/batch_1.txt
 test_screenshots_txt: /home/moucheng/projects/screen_action_labels/data/split/Wonderbread/1723811870.4719887/testing/screenshots.txt
 # train_labels_txt: data/split/demos/1723824678.9644685/training/labels.txt
 # test_labels_txt: /home/moucheng/data/split/Notepad/many_shots_1719414312.8246899_train_10_debug_only_detailed_labels/testing/labels.txt # change this to your own path
 save_path: ../../results # change this to your own path
 max_tokens: 2000 # normally less than 4000
 temperature_majority_voting: 0.5 # normally less than 1
-in_context_learning: false # flag to use in context learning for fine tuning
+in_context_learning: true # flag to use in context learning for fine tuning
 temperature: 0.1
 effective_train_videos_number: 8
 temperature_self_reflect: 0.1 # normally less than 1
-top_p_majority_voting: 0.5 # normally less than 1
+top_p_majority_voting: 0.9 # normally less than 1
 top_p_self_reflect: 0.9 # normally less than 1
 
 repetition_penalty_majority_voting: 1.0
