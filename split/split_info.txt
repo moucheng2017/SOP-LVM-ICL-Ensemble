@@ -1,6 +1,0 @@
-Training data: 217
-Testing data: 507
-Training ratio: 0.3
-Testing ratio: 0.7
-Total number of videos: 724
-Random seed: 42

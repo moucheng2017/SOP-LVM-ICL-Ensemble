@@ -6,6 +6,9 @@ data/
 .venv/
 dir/env/
 
+# ignore split files
+split/
+
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]
