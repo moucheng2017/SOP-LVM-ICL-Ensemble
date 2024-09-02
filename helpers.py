@@ -49,10 +49,12 @@ def get_screenshots(folder_path):
     screenshots = sorted([f for f in os.listdir(screenshots_folder_path) if f.endswith('.png')], key=sort_key)
     return screenshots, screenshots_folder_path
     
-
 def read_frames(folder_path, resize=None):
     base64_frames = []
     screenshots, screenshots_folder_path = get_screenshots(folder_path)
+    if len(screenshots) > 15:
+        screenshots = [screenshots[i] for i in range(0, len(screenshots), len(screenshots)//15)]
+    # for gpt:
     for f in screenshots:
         img = cv2.imread(os.path.join(screenshots_folder_path, f))
         if resize:
