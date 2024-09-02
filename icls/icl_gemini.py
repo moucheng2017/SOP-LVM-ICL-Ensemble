@@ -163,9 +163,11 @@ def main_gemini(args):
     testing_videos_number = len(test_videos_paths)
     print('number of testing videos: ', testing_videos_number)
     testing_time_start = time.time()
-
+    skips = []
+    iteration = 0
     # test_videos_paths = ["data/demos/debug_demos/494 @ 2024-01-07-17-31-39/"]
     for video in tqdm(test_videos_paths, desc="testing videos"):
+        iteration += 1
         prompt_test_index = 0
         frames, number_frames = read_frames(video, resize)
 
@@ -215,26 +217,34 @@ def main_gemini(args):
                     "top_p": config['top_p_majority_voting']
                 }
 
-                # Set up Gemini model
-                genai.configure(api_key=API_KEY)
-                try:
-                    model = genai.GenerativeModel('gemini-1.5-flash', system_instruction=str(config['prompts']['system'])
-)
-                except:
-                    breakpoint()
+                for i in range(15): # Try 15 times
+                    try:
+                        # Set up Gemini model
+                        genai.configure(api_key=API_KEY)
+                        model = genai.GenerativeModel('gemini-1.5-flash', system_instruction=str(config['prompts']['system'])
+        )
 
-                images = []
-                for i, img in enumerate(screenshots):
-                    img_path = screenshots_folder_path + "/" + img
-                    print(f">> Uploading: {img_path} at {-(i+1)}") # insert images into prompt
-                    # f = {"role":"user", "parts":  [Image(url=img_path)] }#genai.upload_file(img_path)}#
-                    f = {"role":"user", "parts":  [genai.upload_file(img_path)] }
-                    prompt.insert(-(i+1), f)
+                        images = []
+                        for i, img in enumerate(screenshots):
+                            img_path = screenshots_folder_path + "/" + img
+                            print(f">> Uploading: {img_path} at {-(i+1)}") # insert images into prompt
+                            # f = {"role":"user", "parts":  [Image(url=img_path)] }#genai.upload_file(img_path)}#
+                            f = {"role":"user", "parts":  [genai.upload_file(img_path)] }
+                            prompt.insert(-(i+1), f)
 
-                # prompt = prompt[1:]
-                chat = model.start_chat(history=prompt)
-                print("Message:",prompt[-1]["parts"])
-                response = chat.send_message(str(prompt[-1]["parts"]))
+                        # prompt = prompt[1:]
+                        chat = model.start_chat(history=prompt)
+                        print("Message:",prompt[-1]["parts"])
+                        response = chat.send_message(str(prompt[-1]["parts"]))
+                        break
+                    except Exception as e:
+                        print("ERROR:", e)
+                        print(f"retrying for {i+1} time")
+                        time.sleep(20)
+                        if i == 14:
+                            print("!! ERROR HAS OCCURED !!: CONTINUING")
+                            skips.append({"prompt": prompt, "error": e, "test_num": iteration })
+
                 # conf = GenerationConfig(temperature=config["temperature"])
                 # response = model.generate_parts(prompt)
                 print("Response:", response.text)
@@ -298,5 +308,8 @@ def main_gemini(args):
     with open(current_save_path / 'testing_time.txt', 'w') as f:
         f.write(str(testing_time))
     print('Testing completed..\n')
+    print(f"skipped questions: {skips}")
+    with open(current_save_path / 'debug_info.txt', 'w') as f:
+        f.write(str(skips))
 
 
