@@ -1,14 +1,15 @@
 # Virtual environment
 env/
+split/
+data/
+.env/
+.venv/
 dir/env/
 
 # Byte-compiled / optimized / DLL files
-**/__pycache__/
 __pycache__/
-icls/__pycache__/
-icls/**/__pycache__/
-evals/__pycache__/
-evals/**/__pycache__/
+*.py[cod]
+*$py.class
 
 # Pycharm directory
 .idea/
@@ -34,3 +35,7 @@ evals/sop_cache/
 
 # results:
 evals/dummy_debug_eval_results.csv
+results/
+
+# Data
+data/

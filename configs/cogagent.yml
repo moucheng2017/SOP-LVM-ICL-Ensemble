@@ -1,0 +1,50 @@
+model_name: THUDM/cogagent-chat-hf
+tokenizer: lmsys/vicuna-7b-v1.5
+# TODO actual paths for train / test
+train_screenshots_txt: data/split/demos/1723995413.0489748/training/screenshots.txt
+test_screenshots_txt: data/split/demos/1723995413.0489748/testing/screenshots.txt
+train_labels_txt: data/split/demos/1723995413.0489748/training/labels.txt
+# resume_testing_path: results/1722441353/Wonderbread/debug_demos
+save_path: results
+max_tokens: 4096 # normally less than 4000
+in_context_learning: true # flag to use in context learning for fine tuning
+effective_train_videos_number: 10
+temperature_majority_voting: 0.5 # normally less than 1
+temperature_self_reflect: 0.1 # normally less than 1
+top_p_majority_voting: 0.5 # normally less than 1
+top_p_self_reflect: 0.9 # normally less than 1
+repetition_penalty_majority_voting: 1.0
+repetition_penalty_self_reflect: 1.0
+majority_voting_candidates: 1 # number of candidates for majority voting, if it is 1, it will not use majority voting
+image_resize: [1120, 1120] # [width, height]
+use_self_reflect: false # when used, it will use the self-reflect mechanism
+debug_mode: true # when used, it will only test on the last video of the testing videos
+quant: 8 # 4, 8 or commented out
+seed: 42
+prompts:
+  system: >
+    Your job is to write a standard operating procedure (SOP) for a workflow based on the given screenshots.
+    The SOP should contain a numerated list of actions taken by the user to complete the given workflow.
+  training_example: >
+    Here are a sequence of screenshots of the workflow:
+  testing_example: >
+    You are given the following sequence of screenshots which were sourced from a demonstration of the workflow. 
+    The screenshots are presented in chronological order.
+    Here are the screenshots of the workflow:
+  reflection: >
+    The initial prediction is:
+    {initial_prediction}
+    Please review your prediction. Provide an improved version of the prediction if necessary.
+  question: >
+    Given what you observe in the sequence of actions, write an SOP for completing the workflow. 
+    The SOP should simply contain an enumerated list of actions taken by the user to complete the given workflow.
+    In your SOP, list all of the actions taken (i.e., buttons clicked, fields entered, mouse scrolls etc.). 
+    Be descriptive about elements (i.e., 'the subheading located under the "General" section'). 
+    Use the location of the mouse to identify which exact elements were clicked.
+    Here is a sample format for what your SOP should look like:
+    1. Type the name of the repository in the search bar at the top left of the screen. The placeholder text in the search bar is "Find a repository...", and it is located directly to the right of the site logo.
+    2. A list of repositories will appear on the next page. Scroll down until you see a repository with the desired name. The name of the repository will be on the lefthand side of the row in bold font. Stop when you find the name of the repository.
+    3. Click on the relevant repository to go to the repository's main page.
+    Note, the above SOP is just an example. Use the same format, but the actions will be different for your workflow.
+    Be as detailed as possible. Each step should be a discrete action that reflects what you see in the corresponding step. Don't skip steps.
+    Please write your SOP below:
