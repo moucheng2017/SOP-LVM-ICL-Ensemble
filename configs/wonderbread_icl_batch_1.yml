@@ -1,10 +1,10 @@
 model_name: "gpt-4o-mini" # gpt-4o-mini
 api_key: sk-proj-ZxH9n4f7EHjWlCBo0bdjT3BlbkFJzpfDqdqNHisk1b56DZoM # Ask Sam for your api key
 # api_key: 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
-# train_screenshots_txt: /home/moucheng/projects/screen_action_labels/data/split/Wonderbread/1723811870.4719887/training_data_batches/batch_0.txt # change this to your own path
-train_screenshots_txt: /home/moucheng/projects/screen_action_labels/data/split/Wonderbread/1723811870.4719887/training/screenshots.txt # change this to your own path
+# train_screenshots_txt: /home/moucheng/projects/screen_action_labels/data/split/Wonderbread/1723811870.4719887/training_data_bs8_sd42/batch_1.txt
+train_screenshots_txt: /home/moucheng/projects/screen_action_labels/data/split/Wonderbread/1723811870.4719887/training_data_bs8_sd42/batch_1.txt
 test_screenshots_txt: /home/moucheng/projects/screen_action_labels/data/split/Wonderbread/1723811870.4719887/testing/screenshots.txt # change this to your own path
-resume_testing_path: 
+resume_testing_path: /home/moucheng/projects/screen_action_labels/results/1724922859/Wonderbread/gold_demos
 save_path: ../../results # change this to your own path
 max_tokens: 4096 # 
 effective_train_videos_number: 8

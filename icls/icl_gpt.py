@@ -1,7 +1,7 @@
 import os
 import time
 import openai
-from openai import OpenAI
+# from openai import OpenAI
 from tqdm import tqdm
 from helpers import save_config, load_config, read_frames
 from helpers import read_labels, majority_vote, prediction_template
@@ -13,6 +13,32 @@ import random
 import base64
 import cv2
 import sys
+import traceback
+
+def openai_completion(client, params) -> str:
+    try:
+        response = client.chat.completions.create(
+            **params,
+            stream=False
+        )
+    except openai.RateLimitError:
+        print("Rate limit exceeded -- waiting 25 min before retrying")
+        time.sleep(1500)
+        return openai_completion(client, params)
+    except openai.APIError as e:
+        traceback.print_exc()
+        print(f"OpenAI API error: {e}")
+        if 'Error code: 500' in str(e) or 'Error code: 503' in str(e): # 500, 503 are openai internal server errors
+            time.sleep(1800)
+            print('Retrying after 30 minutes..')
+            return openai_completion(client, params)
+        else:
+            raise e
+    except Exception as e:
+        traceback.print_exc()
+        print(f"Unknown error: {e}")
+        raise e
+    return response.choices[0].message.content
 
 def main_gpt(args):
     config = load_config(args.config)
@@ -27,7 +53,7 @@ def main_gpt(args):
     
     # errors: tuple = (openai.RateLimitError,),
     
-    client = OpenAI(api_key=API_KEY)
+    client = openai.OpenAI(api_key=API_KEY)
     
     train_screenshots = config['train_screenshots_txt']
     test_screenshots = config['test_screenshots_txt']
@@ -169,109 +195,100 @@ def main_gpt(args):
         prompt_test_index = 0
         frames, number_frames = read_frames(video, resize)
 
-        if number_frames > 50:
-            print(f'Number of frames in the testing video {video}: {number_frames}. Too many frames, skipping..')
-            pass
+        if number_frames > 20:
+            print(f'Number of frames in the testing video {video}: {number_frames}. Too many frames, downsampling to 20 frames.')
+            frames = [frames[i] for i in range(0, len(frames), len(frames)//20)]
+            number_frames = 20
         else:
             print(f'Number of frames in the testing video {video}: {number_frames}')
-            # Add the system prompt to the prompt:
-            prompt.append(
-                {
-                    "role": "user",
-                    "content": config['prompts']['testing_example'].format(number_frames=number_frames)
+        
+        prompt.append(
+            {
+                "role": "user",
+                "content": config['prompts']['testing_example'].format(number_frames=number_frames)
+            }
+        )
+        prompt_test_index += 1
+
+        # Add the frames to the prompt:
+        images = []
+        for j in range(number_frames):
+            images.append(
+                {"type": "image_url",
+                "image_url": {
+                    "url": f"data:image/png;base64,{frames[j]}",
+                    "detail": "high"}
                 }
             )
-            prompt_test_index += 1
+        prompt.append({
+            "role": "user",
+            "content": images
+        })
+        prompt_test_index += 1
 
-            # Add the frames to the prompt:
-            images = []
-            for j in range(number_frames):
-                images.append(
-                    {"type": "image_url",
-                    "image_url": {
-                        "url": f"data:image/png;base64,{frames[j]}",
-                        "detail": "high"}
-                    }
-                )
-            prompt.append({
+        # Add the question to the prompt:
+        prompt.append({
+            "role": "user",
+            "content": config['prompts']['question']
+        })
+        prompt_test_index += 1
+
+        predictions = []
+        num_inferences = config['majority_voting_candidates']
+
+        params = {
+            "model": config['model_name'],
+            "messages": prompt,
+            "max_tokens": int(config['max_tokens']),
+            "temperature": config['temperature_majority_voting'],
+            "top_p": config['top_p_majority_voting'],
+            "timeout": config['timeout']
+        }
+        
+        for i in range(num_inferences):
+            prediction = openai_completion(client, params)
+            predictions.append(prediction)
+            time.sleep(60)
+
+        if num_inferences > 1:
+            print('Using majority voting to select the final prediction..')
+            initial_prediction = majority_vote(predictions)
+        else:
+            initial_prediction = predictions[0]
+
+        if config['use_self_reflect'] and config['use_self_reflect'] == True:
+            print('Using self-reflection to refine the prediction..')
+            reflection_prompt = prompt.copy()
+            reflection_prompt.append({
                 "role": "user",
-                "content": images
+                "content": config['prompts']['reflection'].format(initial_prediction=initial_prediction)
             })
-            prompt_test_index += 1
-
-            # Add the question to the prompt:
-            prompt.append({
-                "role": "user",
-                "content": config['prompts']['question']
-            })
-            prompt_test_index += 1
-
-            predictions = []
-            num_inferences = config['majority_voting_candidates']
             
-            for i in range(num_inferences):
-                for attempt in range(5):
-                    try:
-                        params = {
-                            "model": config['model_name'],
-                            "messages": prompt,
-                            "max_tokens": int(config['max_tokens']),
-                            "temperature": config['temperature_majority_voting'],
-                            "top_p": config['top_p_majority_voting']
-                        }
-                        result = client.chat.completions.create(**params, timeout=60)
-                        prediction = result.choices[0].message.content
-                        predictions.append(prediction)
-                        # time.sleep(60)
-                        break
-                    except Exception as e: 
-                        # print the exception and retry after wait_time seconds:
-                        print('Exception: ', e)
-                        wait_time = 10 * (2 ** attempt)
-                        print('Retrying attempt {} after {} seconds..'.format(attempt, wait_time))
-                        time.sleep(wait_time)
-
-                raise Exception("Failed to complete API request after multiple attempts.")
-
-            if num_inferences > 1:
-                print('Using majority voting to select the final prediction..')
-                initial_prediction = majority_vote(predictions)
-            else:
-                initial_prediction = predictions[0]
-
-            if config['use_self_reflect'] and config['use_self_reflect'] == True:
-                print('Using self-reflection to refine the prediction..')
-                reflection_prompt = prompt.copy()
-                reflection_prompt.append({
-                    "role": "user",
-                    "content": config['prompts']['reflection'].format(initial_prediction=initial_prediction)
-                })
-                
-                reflection_params = {
-                    "model": config['model_name'],
-                    "messages": reflection_prompt,
-                    "max_tokens": int(config['max_tokens']),
-                    "temperature": config['temperature_self_reflect'],
-                    "top_p": config['top_p_self_reflect']
-                }
-                
-                reflection_result = client.chat.completions.create(**reflection_params, timeout=60)
-                final_prediction = reflection_result.choices[0].message.content
-                time.sleep(60)
-            else:
-                final_prediction = initial_prediction
+            reflection_params = {
+                "model": config['model_name'],
+                "messages": reflection_prompt,
+                "max_tokens": int(config['max_tokens']),
+                "temperature": config['temperature_self_reflect'],
+                "top_p": config['top_p_self_reflect']
+            }
             
-            video_name = video.split('/')[-3:]
-            video_name = '/'.join(video_name)
-            video_save_path = Path(current_save_path) / video_name
-            video_save_path.mkdir(parents=True, exist_ok=True)
-            print('Testing on video: ', video)
-            save_path = video_save_path / 'label_prediction.txt'
-            with open(save_path, 'w') as f:
-                f.write(final_prediction)
-            
-            for i in range(prompt_test_index):
-                prompt.pop()
+            reflection_result = client.chat.completions.create(**reflection_params, timeout=60)
+            final_prediction = reflection_result.choices[0].message.content
+            time.sleep(60)
+        else:
+            final_prediction = initial_prediction
+        
+        video_name = video.split('/')[-3:]
+        video_name = '/'.join(video_name)
+        video_save_path = Path(current_save_path) / video_name
+        video_save_path.mkdir(parents=True, exist_ok=True)
+        print('Testing on video: ', video)
+        save_path = video_save_path / 'label_prediction.txt'
+        with open(save_path, 'w') as f:
+            f.write(final_prediction)
+        
+        for i in range(prompt_test_index):
+            prompt.pop()
             
     testing_time_end = time.time()
     testing_time = testing_time_end - testing_time_start
