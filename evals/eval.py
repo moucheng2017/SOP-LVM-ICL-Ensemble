@@ -44,16 +44,27 @@ def preprocess_sop(sop: str) -> List[str]:
 
     # Remove empty lines
     lines = [line for line in lines if line.strip() != ""]
+    
+    # Remove lines that doesn't start with a number
+    # lines = [line for line in lines if line.strip()[0].isdigit()]
 
     # For each line, find the first instance of "." and keep everything after that
     lines = [line[line.find(".") + 1 :] for line in lines]
 
-    # Remove any leading or trailing whitespace
+    # # Remove any leading or trailing whitespace
     lines = [line.strip() for line in lines]
 
-    # Remove line if it is empty
+    # # Remove line if it is empty
     lines = [line for line in lines if len(line) > 0]
-
+    
+    # If the line starts with * or -, remove it
+    lines = [line[1:] if line[0] in ["*", "-"] else line for line in lines]
+    lines = [line[1:] if line[0] in ["*", "-"] else line for line in lines]
+    
+    # Print the preprocessed SOP
+    # print("\n".join(lines))
+    # print("\n\n\n")
+    
     return lines
 
 
@@ -69,7 +80,7 @@ def _evaluate_sops(sop_dict):
     # Preprocess the SOPs
     pred_sop = preprocess_sop(sop_dict["pred_sop"])
     gold_sop = preprocess_sop(sop_dict["gold_sop"])
-
+    
     # Create a cache_id for saving prompt eval results
     cache_id: str = (
         sop_dict["experiment_name"]
@@ -192,12 +203,11 @@ if __name__ == "__main__":
     # ==========================================================================================
     # set up openai api key in terminal:
     # export OPENAI_API_KEY="sk-proj-ZxH9n4f7EHjWlCBo0bdjT3BlbkFJzpfDqdqNHisk1b56DZoM"
-    predictions_folder = "/home/moucheng/results/1722520086/Wonderbread/gold_demos" # icl
-    # predictions_folder = "/home/moucheng/results/1722441353/Wonderbread/gold_demos" # baseline
-    gt_folder = "/home/moucheng/data/Wonderbread/gold_demos"
-    task_name = "Wonderbread_gold_demos"
-    ablation = "gpt4o_base"
-    test_no = 150
+    predictions_folder = "/home/moucheng/projects/screen_action_labels/results/1724945161/Wonderbread/gold_demos"
+    gt_folder = "/home/moucheng/projects/screen_action_labels/data/Wonderbread/gold_demos"
+    task_name = "Wonderbread_gold_demos_507"
+    ablation = "gpt4o_mini"
+    
     # ==========================================================================================
     # ==========================================================================================
 
@@ -205,8 +215,8 @@ if __name__ == "__main__":
     all_videos = os.listdir(predictions_folder)  
     all_videos.sort()
 
-    if test_no is not None:
-        all_videos = all_videos[:test_no]
+    # if test_no is not None:
+    #     all_videos = all_videos[:test_no]
     
     # Create list to store collected SOP pairs
     sops = []
@@ -216,25 +226,29 @@ if __name__ == "__main__":
         prediction_path = os.path.join(predictions_folder, video, "label_prediction.txt")
         gt_path = os.path.join(gt_folder, video)
         gold_sop = read_labels(gt_path)
+        
         # Load the prediction
         with open(prediction_path, "r") as f:
             pred_sop = f.read()
-        # remove first line in gold_sop:
+        
+        # remove first line which is a title in both pred_sop and gold_sop
         gold_sop = "\n".join(gold_sop.split("\n")[1:])
-        # remove the last line in pred_sop:
-        # pred_sop = "\n".join(pred_sop.split("\n")[:-1])
-        # Add an instance with rank_2 as the pred_sop and rank_1 as the gold_sop
-        video = video.replace("@", "")
-        video = video.replace(" ", "-") 
-        sops.append(
-            {
-                "pred_sop": pred_sop,
-                "gold_sop": gold_sop,
-                "cache_id": task_name,
-                "demo_name": video,
-                "ablation": ablation
-            }
-        )
+        pred_sop = "\n".join(pred_sop.split("\n")[1:])
+        
+        # Check if pred_sop is empty or gold_sop is empty:
+        if pred_sop != "" and gold_sop != "":
+            # Add an instance with rank_2 as the pred_sop and rank_1 as the gold_sop
+            video = video.replace("@", "")
+            video = video.replace(" ", "-") 
+            sops.append(
+                {
+                    "pred_sop": pred_sop,
+                    "gold_sop": gold_sop,
+                    "cache_id": task_name,
+                    "demo_name": video,
+                    "ablation": ablation
+                }
+            )
 
     results = evaluate_sops(list_of_sops=sops, experiment_name=task_name)
 
@@ -243,7 +257,7 @@ if __name__ == "__main__":
     # make a subfolder called evals + timestamp:
     import time
     time = int(time.time())
-    save_folder = os.path.join(save_folder, "evals" + str(time) + "_t" + str(test_no))
+    save_folder = os.path.join(save_folder, "evals" + str(time)) 
     os.makedirs(save_folder, exist_ok=True)
     # sort the results by demo_name:
     results = results.sort_values(by="demo_name")
