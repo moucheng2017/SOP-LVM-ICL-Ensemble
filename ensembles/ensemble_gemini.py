@@ -11,6 +11,8 @@ from pathlib import Path
 import argparse
 import traceback
 
+# (TODO): This whole file needs to be updated
+
 # Ensemble predctions as priors for Gemini (1.5-flash):
 # 1. For each video, read the frames first
 # 2. For each video, read all of available predictions as pseudo labels

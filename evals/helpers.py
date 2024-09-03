@@ -314,7 +314,8 @@ def _fetch_geminipro_completion(messages: List[Any], model_name: str) -> str:
     assert model_name in [
         "gemini-1.0-pro",
         "gemini-pro-vision",
-    ], f"Unknown model: {model_name}, must be one of 'gemini-1.0-pro', 'gemini-pro-vision'"
+        "gemini-1.5-flash",
+    ], f"Unknown model: {model_name}, must be one of 'gemini-1.0-pro', 'gemini-pro-vision', 'gemini-1.5-flash'"
 
     genai.configure(api_key=os.environ["GOOGLE_API_KEY"])
     model = genai.GenerativeModel(model_name)
@@ -461,8 +462,8 @@ def _fetch_openai_completion(messages: List[Any], **kwargs) -> str:
             **kwargs,
         )
     except openai.RateLimitError:
-        print("Rate limit exceeded -- waiting 1 min before retrying")
-        time.sleep(60)
+        print("Rate limit exceeded -- waiting 10 min before retrying")
+        time.sleep(600)
         return _fetch_openai_completion(messages, **kwargs)
     except openai.APIError as e:
         traceback.print_exc()
@@ -486,9 +487,10 @@ def _fetch_completion(
     )
     if model == "GPT4":
         if not model_name:
-            model_name: str = (
-                "gpt-4-0125-preview" if not is_image else "gpt-4-vision-preview"
-            )
+            model_name: str = "gpt-4o-mini"
+            # model_name: str = (
+            #     "gpt-4-0125-preview" if not is_image else "gpt-4-vision-preview"
+            # )
         response: str = _fetch_openai_completion(
             messages, model=model_name, temperature=0.0
         )

@@ -1,11 +1,11 @@
 model_name: "gpt-4o-mini" # gpt-4o-mini
 api_key: sk-proj-ZxH9n4f7EHjWlCBo0bdjT3BlbkFJzpfDqdqNHisk1b56DZoM # Ask Sam for your api key
 test_screenshots_txt: /home/moucheng/projects/screen_action_labels/data/split/Wonderbread/1723811870.4719887/testing/screenshots.txt # change this to your own path
-resume_testing_path: 
+resume_testing_path: /home/moucheng/projects/screen_action_labels/results/1725376195/Wonderbread/gold_demos
 save_path: ../../../results # change this to your own path
 max_tokens: 4096 # 
 timeout: 2000.0
-temperature: 0.1 # normally less than 1
+temperature: 1.0 # normally less than 1
 top_p: 0.95 # normally less than 1
 image_resize: [1024, 768] # [width, height] [1024, 768]
 debug_mode: false # when used, it will only test on the last video of the testing videos

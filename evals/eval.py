@@ -215,10 +215,10 @@ if __name__ == "__main__":
     # ==========================================================================================
     # set up openai api key in terminal:
     # export OPENAI_API_KEY="sk-proj-ZxH9n4f7EHjWlCBo0bdjT3BlbkFJzpfDqdqNHisk1b56DZoM"
-    predictions_folder = "/home/moucheng/projects/screen_action_labels/results/1724945161/Wonderbread/gold_demos"
+    predictions_folder = "/home/moucheng/projects/screen_action_labels/results/1725293519/Wonderbread/gold_demos"
     gt_folder = "/home/moucheng/projects/screen_action_labels/data/Wonderbread/gold_demos"
     task_name = "Wonderbread_gold_demos_507"
-    ablation = "gpt4o_mini"
+    ablation = "gemini1.5flash"
     
     # ==========================================================================================
     # ==========================================================================================
