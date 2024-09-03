@@ -1,21 +1,13 @@
 import os
 import time
-from google.generativeai.types import GenerationConfigType
 from tqdm import tqdm
 from helpers import save_config, load_config, read_frames, get_screenshots
 from helpers import read_labels, majority_vote, prediction_template
 from helpers import read_paths_from_txt, check_videos_paths
-import yaml
 from pathlib import Path
-import argparse
 import random
-import base64
-import cv2
-import sys
 import google.generativeai as genai
-from google.generativeai.types.generation_types import GenerationConfig
-from IPython.display import Image
-from IPython.core.display import HTML
+from google.generativeai import GenerationConfig
 
 def main_gemini(args):
     config = load_config(args.config)
@@ -31,10 +23,6 @@ def main_gemini(args):
     train_screenshots = config['train_screenshots_txt']
     test_screenshots = config['test_screenshots_txt']
 
-    # # check if the file name in train_screenshots is screenshots.txt
-    # assert train_screenshots.split('/')[-1] == 'screenshots.txt'
-    # assert test_screenshots.split('/')[-1] == 'screenshots.txt'
-
     train_screenshots_paths = read_paths_from_txt(train_screenshots)
     test_screenshots_paths = read_paths_from_txt(test_screenshots)
     
@@ -43,7 +31,7 @@ def main_gemini(args):
 
     train_videos_paths = [path.rsplit('/', 1)[0] for path in train_screenshots_paths]
     test_videos_paths = [path.rsplit('/', 1)[0] for path in test_screenshots_paths]
-    
+
     # Save the used config
     # if config.get("resume_testing_path") and config["resume_testing_path"] != None and config["resume_testing_path"] != False:
     if config["resume_testing_path"] != None and config["resume_testing_path"] != False:
@@ -74,14 +62,22 @@ def main_gemini(args):
         assert len(test_videos_paths) == 1
     else:
         pass
-        # print('Testing on all videos.')
+
     prompt = []
-    # prompt = [{
-    #     "role": "system",
-    #     "parts": str(config['prompts']['system'])
-    # }]
+    genai.configure(api_key=API_KEY)
+    model = genai.GenerativeModel(config['model_name'], 
+                                    system_instruction=str(config['prompts']['system']))
+    
+    generation_config = GenerationConfig(
+    temperature=config['temperature'],
+    top_p=config['top_p_majority_voting'],
+    top_k=32,
+    candidate_count=1,
+    max_output_tokens=config['max_tokens'])
+    
 
     if config["in_context_learning"] == True: 
+
         print('Using in-context learning..')
         if config["resume_testing_path"] != None and config["resume_testing_path"] != False:
             print('Resume testing using the previous training videos..')
@@ -115,9 +111,6 @@ def main_gemini(args):
         num_train_frames = 0
 
         for video in train_videos_paths_:
-            frames, number_frames = read_frames(video, resize) # NOTE: This is not the method recommended by the Gemini documentation
-            print(f'Number of frames in the training video {video}: {number_frames}')
-            num_train_frames += number_frames
             # Add the training start prompt to the prompt:
             prompt.append(
                 {
@@ -126,21 +119,17 @@ def main_gemini(args):
                 }
             )
 
-            # Add the frames to the prompt:
-            # images = []
-            # for j in range(number_frames):
-            #     images.append(
-            #         {"type": "image_url",
-            #         "image_url": {
-            #             "url": f"data:image/png;base64,{frames[j]}",
-            #             "detail": "high"}
-            #         }
-            #     )
-            # prompt.append(
-            #     {"role": "user",
-            #     "parts": str(images)}
-            # )
+            # get screenshots and labels:
+            screenshots, screenshots_folder_path = get_screenshots(video)
+            num_train_frames += len(screenshots)
 
+            for i, img in enumerate(screenshots):
+                img_path = screenshots_folder_path + "/" + img
+                print(f">> Uploading: {img_path} at {-(i+1)}") # insert images into prompt
+                # f = {"role":"user", "parts":  [Image(url=img_path)] }#genai.upload_file(img_path)}#
+                f = {"role":"user", "parts":  [genai.upload_file(img_path)] }
+                prompt.insert(-(i+1), f)
+                
             # Add the labels to the prompt:
             labels = read_labels(video)
             # remove first line:
@@ -159,147 +148,127 @@ def main_gemini(args):
 
         print(f'in-context learning completed after reading {num_train_frames} training frames.')
     
+    else:
+        pass
+    
     print('testing started..')
     testing_videos_number = len(test_videos_paths)
     print('number of testing videos: ', testing_videos_number)
     testing_time_start = time.time()
     skips = []
     iteration = 0
-    # test_videos_paths = ["data/demos/debug_demos/494 @ 2024-01-07-17-31-39/"]
+
     for video in tqdm(test_videos_paths, desc="testing videos"):
         iteration += 1
         prompt_test_index = 0
-        frames, number_frames = read_frames(video, resize)
 
-        if number_frames > 50:
-            print(f'number of frames in the testing video {video}: {number_frames}. too many frames, skipping..')
-            pass
-        else:
-            print(f'number of frames in the testing video {video}: {number_frames}')
-            # add the system prompt to the prompt:
-            prompt.append(
-                {
-                    "role": "user",
-                    "parts": str(config['prompts']['testing_example'].format(number_frames=number_frames))
-                }
-            )
-            prompt_test_index += 1
-
-            # add the frames to the prompt:
-            # for j in range(number_frames):
-                # images.append(frames[j]
-
-            screenshots, screenshots_folder_path = get_screenshots(video)
-
-            # note: may be worth investigasting if converting list to string is what gemini wants for multiple images
-            # prompt.append({
-            #     "role": "user",
-            #     "parts": str(images[:9]) ## control the number of images added to the input
-            # })
-            prompt_test_index += 1
-
-            # add the question to the prompt:
-            prompt.append({
+        prompt.append(
+            {
                 "role": "user",
-                "parts": str(config['prompts']['question'])
-            })
-            prompt_test_index += 1
-
-            predictions = []
-            num_inferences = config['majority_voting_candidates']
-            
-            for n in range(num_inferences):
-                params = {
-                    "model": config['model_name'],
-                    "messages": prompt,
-                    "max_tokens": int(config['max_tokens']),
-                    "temperature": config['temperature_majority_voting'],
-                    "top_p": config['top_p_majority_voting']
-                }
-
-                for i in range(15): # Try 15 times
-                    try:
-                        # Set up Gemini model
-                        genai.configure(api_key=API_KEY)
-                        model = genai.GenerativeModel('gemini-1.5-flash', system_instruction=str(config['prompts']['system'])
+                "parts": str(config['prompts']['testing_example'])
+            }
         )
+        prompt_test_index += 1
 
-                        images = []
-                        for i, img in enumerate(screenshots):
-                            img_path = screenshots_folder_path + "/" + img
-                            print(f">> Uploading: {img_path} at {-(i+1)}") # insert images into prompt
-                            # f = {"role":"user", "parts":  [Image(url=img_path)] }#genai.upload_file(img_path)}#
-                            f = {"role":"user", "parts":  [genai.upload_file(img_path)] }
-                            prompt.insert(-(i+1), f)
+        screenshots, screenshots_folder_path = get_screenshots(video)
+        if len(screenshots) > 20:
+            num_screenshots = len(screenshots)
+            print(f"Too many screenshots{num_screenshots}, downsampling to 20 screenshots.")
+            screenshots = [screenshots[i] for i in range(0, len(screenshots), len(screenshots)//20)]
 
-                        # prompt = prompt[1:]
-                        chat = model.start_chat(history=prompt)
-                        print("Message:",prompt[-1]["parts"])
-                        response = chat.send_message(str(prompt[-1]["parts"]))
-                        break
-                    except Exception as e:
-                        print("ERROR:", e)
-                        print(f"retrying for {i+1} time")
-                        time.sleep(20)
-                        if i == 14:
-                            print("!! ERROR HAS OCCURED !!: CONTINUING")
-                            skips.append({"prompt": prompt, "error": e, "test_num": iteration })
+        # add the question to the prompt:
+        prompt.append({
+            "role": "user",
+            "parts": str(config['prompts']['question'])
+        })
+        prompt_test_index += 1
 
-                # conf = GenerationConfig(temperature=config["temperature"])
-                # response = model.generate_parts(prompt)
-                print("Response:", response.text)
+        predictions = []
+        num_inferences = config['majority_voting_candidates']
+        
+        for n in range(num_inferences):
+            for try_time in range(5): # Try 5 times
+                try:                    
+                    for i, img in enumerate(screenshots):
+                        img_path = screenshots_folder_path + "/" + img
+                        print(f">> Uploading: {img_path} at {-(i+1)}") # insert images into prompt
+                        display_name = video.split('/')[-1] + "_" + img
+                        image = genai.upload_file(path=img_path, display_name=display_name)
+                        f = {"role":"user", "parts":  [image] }
+                        prompt.insert(-(i+1), f)
+                        prompt_test_index += 1
 
-                # result = client.chat.completions.create(**params)
-                # prediction = result.choices[0].message.parts
-                # predictions.append(prediction)
-                predictions.append(response.text)
-                time.sleep(1)
+                    # chat = model.start_chat(history=prompt)
+                    print("Message:",prompt[-1]["parts"])
+                    response = model.generate_content(prompt,
+                                                      generation_config=generation_config)
+                    break
+                except Exception as e:
+                    print("ERROR:", e)
+                    wait_time = 30*try_time**2
+                    print(f"retrying for {i+1} time and waiting for {wait_time} seconds")
+                    time.sleep(wait_time)
+                    if try_time == 4:
+                        print("!! ERROR HAS OCCURED !!: CONTINUING")
+                        skips.append({"prompt": prompt, "error": e, "test_num": iteration })
+
+            print("Response:", response.text)
+            predictions.append(response.text)
+            time.sleep(20)
+        
+        if num_inferences > 1:
+            print('Using majority voting to select the final prediction..')
+            # TODO: to be tested
+            initial_prediction = majority_vote(predictions)
+        else:
+            initial_prediction = predictions[0]
+
+        '''
+        # (TODO: to be implemented and adapted for self-reflection with gemini)
+        if config['use_self_reflect'] and config['use_self_reflect'] == True:
+            # TODO: to be tested
+            print('Using self-reflection to refine the prediction..')
+            reflection_prompt = prompt.copy()
+            reflection_prompt.append({
+                "role": "user",
+                "parts": str(config['prompts']['reflection'].format(initial_prediction=initial_prediction))
+            })
             
-            if num_inferences > 1:
-                print('Using majority voting to select the final prediction..')
-                initial_prediction = majority_vote(predictions)
-            else:
-                initial_prediction = predictions[0]
+            reflection_params = {
+                "model": config['model_name'],
+                "messages": reflection_prompt,
+                "max_tokens": int(config['max_tokens']),
+                "temperature": config['temperature_self_reflect'],
+                "top_p": config['top_p_self_reflect']
+            }
+            
+            reflection_result = client.chat.completions.create(**reflection_params)
+            final_prediction = reflection_result.choices[0].message.parts
+        else:
+            final_prediction = initial_prediction
+        '''
 
-            if config['use_self_reflect'] and config['use_self_reflect'] == True:
-                print('Using self-reflection to refine the prediction..')
-                reflection_prompt = prompt.copy()
-                reflection_prompt.append({
-                    "role": "user",
-                    "parts": str(config['prompts']['reflection'].format(initial_prediction=initial_prediction))
-                })
-                
-                reflection_params = {
-                    "model": config['model_name'],
-                    "messages": reflection_prompt,
-                    "max_tokens": int(config['max_tokens']),
-                    "temperature": config['temperature_self_reflect'],
-                    "top_p": config['top_p_self_reflect']
-                }
-                
-                reflection_result = client.chat.completions.create(**reflection_params)
-                final_prediction = reflection_result.choices[0].message.parts
-            else:
-                final_prediction = initial_prediction
-            
-            video_name = video.split('/')[-3:]
-            video_name = '/'.join(video_name)
-            video_save_path = Path(current_save_path) / video_name
-            video_save_path.mkdir(parents=True, exist_ok=True)
-            print('Testing on video: ', video)
-            save_path = video_save_path / 'label_prediction.txt'
-            with open(save_path, 'w') as f:
-                f.write(final_prediction)
-            
-            for i in range(prompt_test_index):
-                prompt.pop()
-            
-            # save the prompt for comparisons:
-            # prompt_save_path = video_save_path / 'prompt.txt' 
-            # with open(prompt_save_path, 'w') as f:
-            #     yaml.dump(prompt, f)
+        # TODO: to be changed for self reflection:
+        final_prediction = initial_prediction
 
-            time.sleep(5)
+        video_name = video.split('/')[-3:]
+        video_name = '/'.join(video_name)
+        video_save_path = Path(current_save_path) / video_name
+        video_save_path.mkdir(parents=True, exist_ok=True)
+        print('Testing on video: ', video)
+        save_path = video_save_path / 'label_prediction.txt'
+        with open(save_path, 'w') as f:
+            f.write(final_prediction)
+        
+        for i in range(prompt_test_index):
+            prompt.pop()
+        
+        # save the prompt for comparisons:
+        # prompt_save_path = video_save_path / 'prompt.txt' 
+        # with open(prompt_save_path, 'w') as f:
+        #     yaml.dump(prompt, f)
+
+        time.sleep(5)
 
     testing_time_end = time.time()
     testing_time = testing_time_end - testing_time_start

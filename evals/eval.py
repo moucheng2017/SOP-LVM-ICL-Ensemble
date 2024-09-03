@@ -44,22 +44,34 @@ def preprocess_sop(sop: str) -> List[str]:
 
     # Remove empty lines
     lines = [line for line in lines if line.strip() != ""]
+
+    # Cleanup the format, for each line, remove leading symbols until it starts with a number:
+    lines = [line.lstrip(" -") for line in lines]
+    lines = [line.lstrip(" *") for line in lines]
+    lines = [line.lstrip(" .") for line in lines]
+    lines = [line.lstrip(" ") for line in lines]
+
+    # Remove lines that doesn't start with a number
+    lines = [line for line in lines if line.strip()[0].isdigit()]
+
+    # assert if lins are empty
+    assert len(lines) > 0, "SOP is empty"
+
+    # If the line starts with * or -, remove it
+    # lines = [line[1:] if line[0] in ["*", "-"] else line for line in lines]
+    # lines = [line[1:] if line[0] in ["*", "-"] else line for line in lines]
     
     # Remove lines that doesn't start with a number
     # lines = [line for line in lines if line.strip()[0].isdigit()]
 
     # For each line, find the first instance of "." and keep everything after that
-    lines = [line[line.find(".") + 1 :] for line in lines]
+    # lines = [line[line.find(".") + 1 :] for line in lines]
 
     # # Remove any leading or trailing whitespace
     lines = [line.strip() for line in lines]
 
     # # Remove line if it is empty
     lines = [line for line in lines if len(line) > 0]
-    
-    # If the line starts with * or -, remove it
-    lines = [line[1:] if line[0] in ["*", "-"] else line for line in lines]
-    lines = [line[1:] if line[0] in ["*", "-"] else line for line in lines]
     
     # Print the preprocessed SOP
     # print("\n".join(lines))
@@ -232,8 +244,8 @@ if __name__ == "__main__":
             pred_sop = f.read()
         
         # remove first line which is a title in both pred_sop and gold_sop
-        gold_sop = "\n".join(gold_sop.split("\n")[1:])
-        pred_sop = "\n".join(pred_sop.split("\n")[1:])
+        # gold_sop = "\n".join(gold_sop.split("\n")[1:])
+        # pred_sop = "\n".join(pred_sop.split("\n")[1:])
         
         # Check if pred_sop is empty or gold_sop is empty:
         if pred_sop != "" and gold_sop != "":

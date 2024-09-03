@@ -1,6 +1,8 @@
 import os
 import time
 import openai
+import sys
+sys.path.append("..")
 # from openai import OpenAI
 from tqdm import tqdm
 from helpers import save_config, load_config, read_frames
@@ -14,6 +16,23 @@ import base64
 import cv2
 import sys
 import traceback
+
+# Ensemble predctions as priors for GPT4o-mini:
+# 1. For each video, read the frames first
+# 2. For each video, read all of available predictions as pseudo labels
+# 3. For each video, prompt GPT4o-mini with the frames and pseudo labels
+# 4. Get the final prediction
+
+def preprocess_pseudo_labels(pseudo_labels):
+    # pseudo labels are neumrated list of actions in txt:
+    pseudo_labels = pseudo_labels.split('\n')
+    # remove lines with empty strings:
+    pseudo_labels = [line for line in pseudo_labels if line.strip() != ""]
+    # remove lines which does not start with a number:
+    # pseudo_labels = [label for label in pseudo_labels if label[0].isdigit()]
+    # assert if it is empty:
+    assert len(pseudo_labels) > 0
+    return '\n'.join(pseudo_labels)
 
 def openai_completion(client, params) -> str:
     try:
@@ -40,7 +59,8 @@ def openai_completion(client, params) -> str:
         raise e
     return response.choices[0].message.content
 
-def main_gpt(args):
+
+def main(args):
     config = load_config(args.config)
     print('Configurations:')
     print(config)
@@ -50,29 +70,23 @@ def main_gpt(args):
         return
     else:
         API_KEY = config['api_key']
-    
-    # errors: tuple = (openai.RateLimitError,),
-    
+
     client = openai.OpenAI(api_key=API_KEY)
     
-    train_screenshots = config['train_screenshots_txt']
     test_screenshots = config['test_screenshots_txt']
-
-    # # check if the file name in train_screenshots is screenshots.txt
-    # assert train_screenshots.split('/')[-1] == 'screenshots.txt'
-    # assert test_screenshots.split('/')[-1] == 'screenshots.txt'
-
-    train_screenshots_paths = read_paths_from_txt(train_screenshots)
     test_screenshots_paths = read_paths_from_txt(test_screenshots)
+
+    # config['pseudo_labels_path_list'] = pseudo_labels_path_list
+    pseudo_labels_path_list = config['pseudo_labels_path_list']
+    pseudo_labels_number = len(pseudo_labels_path_list)
+    print('Number of pseudo labels: ', pseudo_labels_number)
     
     resize = config['image_resize']
     save_base_path = Path(config['save_path'])
 
-    train_videos_paths = [path.rsplit('/', 1)[0] for path in train_screenshots_paths]
     test_videos_paths = [path.rsplit('/', 1)[0] for path in test_screenshots_paths]
     
     # Save the used config
-    # if config.get("resume_testing_path") and config["resume_testing_path"] != None and config["resume_testing_path"] != False:
     if config["resume_testing_path"] != None and config["resume_testing_path"] != False:
         print('Resuming testing..')
         current_save_path = config["resume_testing_path"]
@@ -101,92 +115,13 @@ def main_gpt(args):
         assert len(test_videos_paths) == 1
     else:
         pass
-        # print('Testing on all videos.')
 
     prompt = [{
         "role": "system",
         "content": config['prompts']['system']
     }]
 
-    if config["in_context_learning"] == True: 
-        print('Using in-context learning..')
-        if config["resume_testing_path"] != None and config["resume_testing_path"] != False:
-            print('Resume testing using the previous training videos..')
-            train_video_path_txt = current_save_path / 'train_videos_paths.txt'
-            with open(train_video_path_txt, 'r') as f:
-                train_videos_paths_ = f.readlines()
-            train_videos_paths_ = [video.strip() for video in train_videos_paths_]
-            print('Number of training videos from last train: ', len(train_videos_paths_))
-        else:
-            effective_train_videos_number = config['effective_train_videos_number']
-            print('Effective number of training videos: ', effective_train_videos_number)
-            number_train_videos = len(train_videos_paths)
-            if number_train_videos > effective_train_videos_number:
-                train_videos_paths_ = random.sample(train_videos_paths, effective_train_videos_number)
-            else:
-                train_videos_paths_ = train_videos_paths
-        
-            with open(current_save_path / 'train_videos_paths.txt', 'w') as f:
-                for item in train_videos_paths_:
-                    f.write("%s\n" % item)
-
-        prompt.append({
-            "role": "user",
-            "content": """
-            You are given the following sequences of screenshots and their SOP labels. 
-            Each sequence is sourced from a demonstration of the workflow. 
-            Each sequence is presented in chronological order.
-            """
-        })
-        
-        num_train_frames = 0
-
-        for video in train_videos_paths_:
-            frames, number_frames = read_frames(video, resize) 
-            print(f'Number of frames in the training video {video}: {number_frames}')
-            num_train_frames += number_frames
-            # Add the training start prompt to the prompt:
-            prompt.append(
-                {
-                    "role": "user",
-                    "content": config['prompts']['training_example']
-                }
-            )
-
-            # Add the frames to the prompt:
-            images = []
-            for j in range(number_frames):
-                images.append(
-                    {"type": "image_url",
-                    "image_url": {
-                        "url": f"data:image/png;base64,{frames[j]}",
-                        "detail": "high"}
-                    }
-                )
-            prompt.append(
-                {"role": "user",
-                "content": images}
-            )
-
-            # Add the labels to the prompt:
-            labels = read_labels(video)
-            # remove first line:
-            labels = labels.split('\n') 
-            labels = '\n'.join(labels[1:])
-            labels = labels.split('\n') 
-            # remove empty lines: 
-            labels = [line for line in labels if line.strip() != '']
-            labels = '\n'.join(labels)
-            labels_header = "The above screenshots have SOP labels as follows:\n"
-            labels = labels_header + labels
-            prompt.append({
-                "role": "user",
-                "content": labels
-            })
-
-        print(f'In-context learning completed after reading {num_train_frames} training frames.')
-    
-    print('Testing started..')
+    print('Ensemble Learning from Pseudo Labels started..')
     testing_videos_number = len(test_videos_paths)
     print('Number of testing videos: ', testing_videos_number)
     testing_time_start = time.time()
@@ -226,6 +161,21 @@ def main_gpt(args):
         })
         prompt_test_index += 1
 
+        # Now add pseudo labels to the prompt:
+        for i, pseudo_labels_path in enumerate(pseudo_labels_path_list):
+            pseudo_labels_video_path = Path(pseudo_labels_path) / video.split('/')[-1]
+            pseudo_labels = pseudo_labels_video_path / 'label_prediction.txt'
+            pseudo_labels = Path(pseudo_labels).read_text()
+            # print i-th pseudo labels:
+            print(f'Pseudo labels {i+1}: {pseudo_labels}')
+            pseudo_labels = preprocess_pseudo_labels(pseudo_labels)
+            pseudo_labels = "The following is a pseudo label of actions for the above frames that you can use as a prior reference:" + '\n' + pseudo_labels
+            prompt.append({
+                "role": "user",
+                "content": pseudo_labels
+            })
+            prompt_test_index += 1
+
         # Add the question to the prompt:
         prompt.append({
             "role": "user",
@@ -233,51 +183,18 @@ def main_gpt(args):
         })
         prompt_test_index += 1
 
-        predictions = []
-        num_inferences = config['majority_voting_candidates']
-
         params = {
             "model": config['model_name'],
             "messages": prompt,
             "max_tokens": int(config['max_tokens']),
-            "temperature": config['temperature_majority_voting'],
-            "top_p": config['top_p_majority_voting'],
+            "temperature": config['temperature'],
+            "top_p": config['top_p'],
             "timeout": config['timeout']
         }
         
-        for i in range(num_inferences):
-            prediction = openai_completion(client, params)
-            predictions.append(prediction)
-            time.sleep(60)
+        prediction = openai_completion(client, params)
+        time.sleep(60)
 
-        if num_inferences > 1:
-            print('Using majority voting to select the final prediction..')
-            initial_prediction = majority_vote(predictions)
-        else:
-            initial_prediction = predictions[0]
-
-        if config['use_self_reflect'] and config['use_self_reflect'] == True:
-            print('Using self-reflection to refine the prediction..')
-            reflection_prompt = prompt.copy()
-            reflection_prompt.append({
-                "role": "user",
-                "content": config['prompts']['reflection'].format(initial_prediction=initial_prediction)
-            })
-            
-            reflection_params = {
-                "model": config['model_name'],
-                "messages": reflection_prompt,
-                "max_tokens": int(config['max_tokens']),
-                "temperature": config['temperature_self_reflect'],
-                "top_p": config['top_p_self_reflect']
-            }
-            
-            reflection_result = client.chat.completions.create(**reflection_params, timeout=60)
-            final_prediction = reflection_result.choices[0].message.content
-            time.sleep(60)
-        else:
-            final_prediction = initial_prediction
-        
         video_name = video.split('/')[-3:]
         video_name = '/'.join(video_name)
         video_save_path = Path(current_save_path) / video_name
@@ -285,7 +202,7 @@ def main_gpt(args):
         print('Testing on video: ', video)
         save_path = video_save_path / 'label_prediction.txt'
         with open(save_path, 'w') as f:
-            f.write(final_prediction)
+            f.write(prediction)
         
         for i in range(prompt_test_index):
             prompt.pop()
@@ -298,4 +215,11 @@ def main_gpt(args):
         f.write(str(testing_time))
     print('Testing completed..\n')
 
+if __name__ == "__main__":
+    parser = argparse.ArgumentParser()
+    parser.add_argument('--config', type=str)
+    args = parser.parse_args()    
+    config = load_config(args.config)
+    main(args)
 
+    
