@@ -47,6 +47,12 @@ def get_screenshots(folder_path):
         pass
 
     screenshots = sorted([f for f in os.listdir(screenshots_folder_path) if f.endswith('.png')], key=sort_key)
+    print(f"Found {len(screenshots)} screenshots in {screenshots_folder_path}")
+    if len(screenshots) == 0:
+        print(f"No screenshots found in {screenshots_folder_path}")
+    elif len(screenshots) > 15:
+        # downsample to 15 frames with equal intervals
+        screenshots = [screenshots[i] for i in range(0, len(screenshots), len(screenshots)//15)]
     return screenshots, screenshots_folder_path
     
 def read_frames(folder_path, resize=None):
