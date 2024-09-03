@@ -6,13 +6,14 @@ completions for a given prompt.
 """
 
 from typing import Optional
-from helpers import fetch_openai_json_completion
+from helpers import fetch_openai_json_completion, _fetch_geminipro_completion
 import os
 import json
 
 # LLM Completion Cache
 SOP_CACHE_DIR = "." + os.path.sep + "sop_cache"
-MODEL = "gpt-4-1106-preview" # model to use for eval
+MODEL = 'gpt-4o-mini'
+# MODEL = 'gemini-1.5-flash'
 
 def get_completion(
     id: Optional[str],
@@ -90,6 +91,7 @@ def generate_completion(prompt: str) -> str:
     """
     # Generate the string completion
     return fetch_openai_json_completion(prompt, model=MODEL)
+    # return _fetch_geminipro_completion(prompt, model_name=MODEL)
 
 
 def log_prompt_completion(

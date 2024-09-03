@@ -68,14 +68,32 @@ def main_gemini(args):
     model = genai.GenerativeModel(config['model_name'], 
                                     system_instruction=str(config['prompts']['system']))
     
+    # Configurations for model inference and safety settings, very important to set up, otherwise the server just randomly block your requests
     generation_config = GenerationConfig(
     temperature=config['temperature'],
     top_p=config['top_p_majority_voting'],
     top_k=32,
     candidate_count=1,
     max_output_tokens=config['max_tokens'])
+    safe = [
+        {
+            "category": "HARM_CATEGORY_HARASSMENT",
+            "threshold": "BLOCK_NONE",
+        },
+        {
+            "category": "HARM_CATEGORY_HATE_SPEECH",
+            "threshold": "BLOCK_NONE",
+        },
+        {
+            "category": "HARM_CATEGORY_SEXUALLY_EXPLICIT",
+            "threshold": "BLOCK_NONE",
+        },
+        {
+            "category": "HARM_CATEGORY_DANGEROUS_CONTENT",
+            "threshold": "BLOCK_NONE",
+        },
+    ]
     
-
     if config["in_context_learning"] == True: 
 
         print('Using in-context learning..')
@@ -201,7 +219,8 @@ def main_gemini(args):
                     # chat = model.start_chat(history=prompt)
                     print("Message:",prompt[-1]["parts"])
                     response = model.generate_content(prompt,
-                                                      generation_config=generation_config)
+                                                      generation_config=generation_config,
+                                                      safety_settings=safe)
                     break
                 except Exception as e:
                     print("ERROR:", e)

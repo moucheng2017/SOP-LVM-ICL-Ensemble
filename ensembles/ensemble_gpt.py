@@ -167,7 +167,7 @@ def main(args):
             pseudo_labels = pseudo_labels_video_path / 'label_prediction.txt'
             pseudo_labels = Path(pseudo_labels).read_text()
             # print i-th pseudo labels:
-            print(f'Pseudo labels {i+1}: {pseudo_labels}')
+            # print(f'Pseudo labels {i+1}: {pseudo_labels}')
             pseudo_labels = preprocess_pseudo_labels(pseudo_labels)
             pseudo_labels = "The following is a pseudo label of actions for the above frames that you can use as a prior reference:" + '\n' + pseudo_labels
             prompt.append({
