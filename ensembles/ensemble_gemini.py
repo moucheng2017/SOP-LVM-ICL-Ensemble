@@ -1,19 +1,19 @@
 import os
 import time
-import google.generativeai as genai
+from tqdm import tqdm
+from pathlib import Path
+import random
 import sys
 sys.path.append("..")
 from tqdm import tqdm
-from helpers import save_config, load_config, read_frames
+from helpers import save_config, load_config, read_frames, get_screenshots
 from helpers import read_labels, majority_vote, prediction_template
 from helpers import read_paths_from_txt, check_videos_paths
-from pathlib import Path
+import google.generativeai as genai
+from google.generativeai import GenerationConfig
 import argparse
-import traceback
 
-# (TODO): This whole file needs to be updated
-
-# Ensemble predctions as priors for Gemini (1.5-flash):
+# Ensemble predctions as priors for GPT4o-mini:
 # 1. For each video, read the frames first
 # 2. For each video, read all of available predictions as pseudo labels
 # 3. For each video, prompt GPT4o-mini with the frames and pseudo labels
@@ -24,37 +24,9 @@ def preprocess_pseudo_labels(pseudo_labels):
     pseudo_labels = pseudo_labels.split('\n')
     # remove lines with empty strings:
     pseudo_labels = [line for line in pseudo_labels if line.strip() != ""]
-    # remove lines which does not start with a number:
-    # pseudo_labels = [label for label in pseudo_labels if label[0].isdigit()]
     # assert if it is empty:
     assert len(pseudo_labels) > 0
     return '\n'.join(pseudo_labels)
-
-# def gemini_completion(client, params) -> str:
-#     try:
-#         response = client.chat.completions.create(
-#             **params,
-#             stream=False
-#         )
-#     except openai.RateLimitError:
-#         print("Rate limit exceeded -- waiting 25 min before retrying")
-#         time.sleep(1500)
-#         return openai_completion(client, params)
-#     except openai.APIError as e:
-#         traceback.print_exc()
-#         print(f"OpenAI API error: {e}")
-#         if 'Error code: 500' in str(e) or 'Error code: 503' in str(e): # 500, 503 are openai internal server errors
-#             time.sleep(1800)
-#             print('Retrying after 30 minutes..')
-#             return openai_completion(client, params)
-#         else:
-#             raise e
-#     except Exception as e:
-#         traceback.print_exc()
-#         print(f"Unknown error: {e}")
-#         raise e
-#     return response.choices[0].message.content
-
 
 def main(args):
     config = load_config(args.config)
@@ -62,28 +34,27 @@ def main(args):
     print(config)
 
     if config.get("api_key") == None:
-        print('Please export the OpenAI API key as an environment variable: export API_KEY=your_dummy_api_key')
+        print('Please export the Gemini API key as an environment variable: export GEMINI_API_KEY=your_dummy_api_key')
         return
     else:
         API_KEY = config['api_key']
-
-    genai.configure(api_key=API_KEY)
-    model = genai.GenerativeModel('gemini-1.5-flash', system_instruction=str(config['prompts']['system']))
     
     test_screenshots = config['test_screenshots_txt']
-    test_screenshots_paths = read_paths_from_txt(test_screenshots)
 
     # config['pseudo_labels_path_list'] = pseudo_labels_path_list
     pseudo_labels_path_list = config['pseudo_labels_path_list']
     pseudo_labels_number = len(pseudo_labels_path_list)
     print('Number of pseudo labels: ', pseudo_labels_number)
+
+    test_screenshots_paths = read_paths_from_txt(test_screenshots)
     
-    resize = config['image_resize']
+    # resize = config['image_resize']
     save_base_path = Path(config['save_path'])
 
     test_videos_paths = [path.rsplit('/', 1)[0] for path in test_screenshots_paths]
-    
+
     # Save the used config
+    # if config.get("resume_testing_path") and config["resume_testing_path"] != None and config["resume_testing_path"] != False:
     if config["resume_testing_path"] != None and config["resume_testing_path"] != False:
         print('Resuming testing..')
         current_save_path = config["resume_testing_path"]
@@ -113,85 +84,153 @@ def main(args):
     else:
         pass
 
-    prompt = [{
-        "role": "system",
-        "content": config['prompts']['system']
-    }]
-
+    prompt = []
+    genai.configure(api_key=API_KEY)
+    model = genai.GenerativeModel(config['model_name'], 
+                                    system_instruction=str(config['prompts']['system']))
+    
+    # Configurations for model inference and safety settings, very important to set up, otherwise the server just randomly block your requests
+    generation_config = GenerationConfig(
+    temperature=config['temperature'],
+    top_p=config['top_p_majority_voting'],
+    top_k=32,
+    candidate_count=1,
+    max_output_tokens=config['max_tokens'])
+    safe = [
+        {
+            "category": "HARM_CATEGORY_HARASSMENT",
+            "threshold": "BLOCK_NONE",
+        },
+        {
+            "category": "HARM_CATEGORY_HATE_SPEECH",
+            "threshold": "BLOCK_NONE",
+        },
+        {
+            "category": "HARM_CATEGORY_SEXUALLY_EXPLICIT",
+            "threshold": "BLOCK_NONE",
+        },
+        {
+            "category": "HARM_CATEGORY_DANGEROUS_CONTENT",
+            "threshold": "BLOCK_NONE",
+        },
+    ]
+    
     print('Ensemble Learning from Pseudo Labels started..')
     testing_videos_number = len(test_videos_paths)
-    print('Number of testing videos: ', testing_videos_number)
+    print('number of testing videos: ', testing_videos_number)
     testing_time_start = time.time()
+    skips = []
+    iteration = 0
 
-    for video in tqdm(test_videos_paths, desc="Testing videos"):
+    for video in tqdm(test_videos_paths, desc="testing videos"):
+        iteration += 1
         prompt_test_index = 0
-        frames, number_frames = read_frames(video, resize)
 
-        if number_frames > 20:
-            print(f'Number of frames in the testing video {video}: {number_frames}. Too many frames, downsampling to 20 frames.')
-            frames = [frames[i] for i in range(0, len(frames), len(frames)//20)]
-            number_frames = 20
-        else:
-            print(f'Number of frames in the testing video {video}: {number_frames}')
-        
         prompt.append(
             {
                 "role": "user",
-                "content": config['prompts']['testing_example'].format(number_frames=number_frames)
+                "parts": str(config['prompts']['testing_example'])
             }
         )
         prompt_test_index += 1
 
-        # Add the frames to the prompt:
-        images = []
-        for j in range(number_frames):
-            images.append(
-                {"type": "image_url",
-                "image_url": {
-                    "url": f"data:image/png;base64,{frames[j]}",
-                    "detail": "high"}
-                }
-            )
+        screenshots, screenshots_folder_path = get_screenshots(video)
+        if len(screenshots) > 20:
+            num_screenshots = len(screenshots)
+            print(f"Too many screenshots{num_screenshots}, downsampling to 20 screenshots.")
+            screenshots = [screenshots[i] for i in range(0, len(screenshots), len(screenshots)//20)]
+
+        # add the question to the prompt:
         prompt.append({
             "role": "user",
-            "content": images
+            "parts": str(config['prompts']['question'])
         })
         prompt_test_index += 1
 
-        # Now add pseudo labels to the prompt:
-        for i, pseudo_labels_path in enumerate(pseudo_labels_path_list):
-            pseudo_labels_video_path = Path(pseudo_labels_path) / video.split('/')[-1]
-            pseudo_labels = pseudo_labels_video_path / 'label_prediction.txt'
-            pseudo_labels = Path(pseudo_labels).read_text()
-            # print i-th pseudo labels:
-            print(f'Pseudo labels {i+1}: {pseudo_labels}')
-            pseudo_labels = preprocess_pseudo_labels(pseudo_labels)
-            pseudo_labels = "The following is a pseudo label of actions for the above frames that you can use as a prior reference:" + '\n' + pseudo_labels
-            prompt.append({
-                "role": "user",
-                "content": pseudo_labels
-            })
-            prompt_test_index += 1
+        predictions = []
+        num_inferences = config['majority_voting_candidates']
+        
+        for n in range(num_inferences):
+            for try_time in range(5): # Try 5 times
+                try:                    
+                    for i, img in enumerate(screenshots):
+                        img_path = screenshots_folder_path + "/" + img
+                        print(f">> Uploading: {img_path} at {-(i+1)}") # insert images into prompt
+                        display_name = video.split('/')[-1] + "_" + img
+                        image = genai.upload_file(path=img_path, display_name=display_name)
+                        f = {"role":"user", "parts":  [image] }
+                        prompt.insert(-(i+1), f)
+                        prompt_test_index += 1
+                    
+                    # Now add pseudo labels to the prompt:
+                    for i, pseudo_labels_path in enumerate(pseudo_labels_path_list):
+                        pseudo_labels_video_path = Path(pseudo_labels_path) / video.split('/')[-1]
+                        pseudo_labels = pseudo_labels_video_path / 'label_prediction.txt'
+                        pseudo_labels = Path(pseudo_labels).read_text()
+                        pseudo_labels = preprocess_pseudo_labels(pseudo_labels)
+                        pseudo_labels = "The following is a pseudo label of actions for the above frames that you can use as a prior reference:" + '\n' + pseudo_labels
+                        # print(f"Pseudo labels {i+1}: {pseudo_labels}")
+                        prompt.append({
+                            "role": "user",
+                            "parts": pseudo_labels
+                        })
+                        prompt_test_index += 1
 
-        # Add the question to the prompt:
-        prompt.append({
-            "role": "user",
-            "content": config['prompts']['question']
-        })
-        prompt_test_index += 1
+                    # chat = model.start_chat(history=prompt)
+                    # print("Message:",prompt[-1]["parts"])
+                    response = model.generate_content(prompt,
+                                                      generation_config=generation_config,
+                                                      safety_settings=safe,
+                                                      request_options={"timeout": 2000})
+                    break
+                except Exception as e:
+                    print("ERROR:", e)
+                    wait_time = 30*try_time**2
+                    print(f"retrying for {i+1} time and waiting for {wait_time} seconds")
+                    time.sleep(wait_time)
+                    if try_time == 4:
+                        print("!! ERROR HAS OCCURED !!: CONTINUING")
+                        skips.append({"prompt": prompt, "error": e, "test_num": iteration })
 
-        params = {
-            "model": config['model_name'],
-            "messages": prompt,
-            "max_tokens": int(config['max_tokens']),
-            "temperature": config['temperature'],
-            "top_p": config['top_p'],
-            "timeout": config['timeout']
-        }
+            print("Response:", response.text)
+            predictions.append(response.text)
+            time.sleep(20)
+        
+        if num_inferences > 1:
+            print('Using majority voting to select the final prediction..')
+            # TODO: to be tested
+            initial_prediction = majority_vote(predictions)
+        else:
+            initial_prediction = predictions[0]
 
         '''
-        (TODO):
-        prediction = openai_completion(client, params)
+        # (TODO: to be implemented and adapted for self-reflection with gemini)
+        if config['use_self_reflect'] and config['use_self_reflect'] == True:
+            # TODO: to be tested
+            print('Using self-reflection to refine the prediction..')
+            reflection_prompt = prompt.copy()
+            reflection_prompt.append({
+                "role": "user",
+                "parts": str(config['prompts']['reflection'].format(initial_prediction=initial_prediction))
+            })
+            
+            reflection_params = {
+                "model": config['model_name'],
+                "messages": reflection_prompt,
+                "max_tokens": int(config['max_tokens']),
+                "temperature": config['temperature_self_reflect'],
+                "top_p": config['top_p_self_reflect']
+            }
+            
+            reflection_result = client.chat.completions.create(**reflection_params)
+            final_prediction = reflection_result.choices[0].message.parts
+        else:
+            final_prediction = initial_prediction
+        '''
+
+        # TODO: to be changed for self reflection:
+        final_prediction = initial_prediction
+
         video_name = video.split('/')[-3:]
         video_name = '/'.join(video_name)
         video_save_path = Path(current_save_path) / video_name
@@ -199,13 +238,17 @@ def main(args):
         print('Testing on video: ', video)
         save_path = video_save_path / 'label_prediction.txt'
         with open(save_path, 'w') as f:
-            f.write(prediction)
+            f.write(final_prediction)
         
         for i in range(prompt_test_index):
             prompt.pop()
-        '''
         
-        time.sleep(60)
+        # save the prompt for comparisons:
+        # prompt_save_path = video_save_path / 'prompt.txt' 
+        # with open(prompt_save_path, 'w') as f:
+        #     yaml.dump(prompt, f)
+
+        time.sleep(5)
 
     testing_time_end = time.time()
     testing_time = testing_time_end - testing_time_start
@@ -214,6 +257,10 @@ def main(args):
     with open(current_save_path / 'testing_time.txt', 'w') as f:
         f.write(str(testing_time))
     print('Testing completed..\n')
+    print(f"skipped questions: {skips}")
+    with open(current_save_path / 'debug_info.txt', 'w') as f:
+        f.write(str(skips))
+
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
@@ -221,5 +268,3 @@ if __name__ == "__main__":
     args = parser.parse_args()    
     config = load_config(args.config)
     main(args)
-
-    

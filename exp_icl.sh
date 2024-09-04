@@ -1,17 +1,17 @@
 #!/bin/bash
 
 # The config file template to be used for the experiment is: /home/moucheng/projects/screen_action_labels/code/action-labelling/configs/wonderbread_icl.yml
-CONFIG_TEMPLATE="/home/moucheng/projects/screen_action_labels/code/action-labelling/configs/wonderbread_icl.yml"
+CONFIG_TEMPLATE="/home/moucheng/projects/screen_action_labels/code/action-labelling/configs/gemini_wonderbread_icl_25.yml"
 
 # The training data to be used are in the folder: /home/moucheng/projects/screen_action_labels/data/split/Wonderbread/1723811870.4719887/training_data_bs10_sd42
-TRAINING_DATA_FOLDER="/home/moucheng/projects/screen_action_labels/data/split/Wonderbread/1723811870.4719887/training_data_bs8_sd42"
+TRAINING_DATA_FOLDER="/home/moucheng/projects/screen_action_labels/data/split/Wonderbread/1723811870.4719887/training_data_bs25_sd42"
 
 # List all txt files in the training data folder
 TRAINING_FILES=($(ls $TRAINING_DATA_FOLDER/*.txt))
 
 # In the above List of txt files, the files are called "batch_0.txt", "batch_1.txt", "batch_2.txt", etc.
 # Get a new training_batches list containing user specified training batches:
-Training_batchs=(3 5 7 9)
+Training_batchs=(0 1 2)
 
 # Get the training data files corresponding to the training batches
 TRAINING_FILES=()

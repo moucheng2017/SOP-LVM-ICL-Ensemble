@@ -26,7 +26,7 @@ def main_gemini(args):
     train_screenshots_paths = read_paths_from_txt(train_screenshots)
     test_screenshots_paths = read_paths_from_txt(test_screenshots)
     
-    resize = config['image_resize']
+    # resize = config['image_resize']
     save_base_path = Path(config['save_path'])
 
     train_videos_paths = [path.rsplit('/', 1)[0] for path in train_screenshots_paths]
@@ -220,7 +220,8 @@ def main_gemini(args):
                     print("Message:",prompt[-1]["parts"])
                     response = model.generate_content(prompt,
                                                       generation_config=generation_config,
-                                                      safety_settings=safe)
+                                                      safety_settings=safe,
+                                                      request_options={"timeout": 2000})
                     break
                 except Exception as e:
                     print("ERROR:", e)
