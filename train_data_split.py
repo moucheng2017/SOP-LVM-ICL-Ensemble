@@ -13,7 +13,7 @@ import argparse
 
 train_txt_full = "/home/moucheng/projects/screen_action_labels/data/split/Wonderbread/1723811870.4719887/training/screenshots.txt"
 exclusion_txt_full = None
-batch_size = 10
+batch_size = 25
 random_seed = 42
 
 # Make the save folder for the training data batches:
