@@ -12,8 +12,9 @@ import json
 
 # LLM Completion Cache
 SOP_CACHE_DIR = "." + os.path.sep + "sop_cache"
-MODEL = 'gpt-4o-mini'
+MODEL = "gpt-4o-mini"
 # MODEL = 'gemini-1.5-flash'
+
 
 def get_completion(
     id: Optional[str],
@@ -65,7 +66,8 @@ def get_completion(
             # Attempt to regenerate the completion (only do this once)
             completion = generate_completion(prompt)
             # Just fail (before logging prompt completion) if the completion is still not valid on the second try
-            _ = json.loads(completion)
+            test_dict = json.loads(completion)
+            test_index = test_dict["index"]
 
         # Cache the completion
         log_prompt_completion(cache_path, prompt, completion, store_fetch_to_cache)
@@ -77,7 +79,12 @@ def get_completion(
     completion["prompt_name"] = prompt_name
 
     # Convert the index to an integer
-    completion["index"] = int(completion["index"])
+    if "index" not in completion:
+        raise RuntimeError(
+            f"Invalid completion loaded: {completion}. ID: {id}, prompt name: {prompt_name}."
+        )
+    else:
+        completion["index"] = int(completion["index"])
 
     return completion
 
