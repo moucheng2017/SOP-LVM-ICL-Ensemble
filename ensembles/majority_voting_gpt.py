@@ -18,10 +18,9 @@ import sys
 import traceback
 
 # Ensemble predctions as priors for GPT4o-mini:
-# 1. For each video, read the frames first
-# 2. For each video, read all of available predictions as pseudo labels
-# 3. For each video, prompt GPT4o-mini with the frames and pseudo labels
-# 4. Get the final prediction
+# 1. For each video, read all of available predictions as pseudo labels
+# 2. For each video, ensemble pseudo labels as final predictions
+# 3. Get the final prediction
 
 def preprocess_pseudo_labels(pseudo_labels):
     # pseudo labels are neumrated list of actions in txt:
@@ -81,7 +80,7 @@ def main(args):
     pseudo_labels_number = len(pseudo_labels_path_list)
     print('Number of pseudo labels: ', pseudo_labels_number)
     
-    resize = config['image_resize']
+    # resize = config['image_resize']
     save_base_path = Path(config['save_path'])
 
     test_videos_paths = [path.rsplit('/', 1)[0] for path in test_screenshots_paths]
@@ -121,44 +120,20 @@ def main(args):
         "content": config['prompts']['system']
     }]
 
-    print('Ensemble Learning from Pseudo Labels started..')
+    print('Ensemble txts only.')
     testing_videos_number = len(test_videos_paths)
     print('Number of testing videos: ', testing_videos_number)
     testing_time_start = time.time()
 
     for video in tqdm(test_videos_paths, desc="Testing videos"):
         prompt_test_index = 0
-        frames, number_frames = read_frames(video, resize)
 
-        if number_frames > 20:
-            print(f'Number of frames in the testing video {video}: {number_frames}. Too many frames, downsampling to 20 frames.')
-            frames = [frames[i] for i in range(0, len(frames), len(frames)//20)]
-            number_frames = 20
-        else:
-            print(f'Number of frames in the testing video {video}: {number_frames}')
-        
         prompt.append(
             {
                 "role": "user",
-                "content": config['prompts']['testing_example'].format(number_frames=number_frames)
+                "content": config['prompts']['testing_example']
             }
         )
-        prompt_test_index += 1
-
-        # Add the frames to the prompt:
-        images = []
-        for j in range(number_frames):
-            images.append(
-                {"type": "image_url",
-                "image_url": {
-                    "url": f"data:image/png;base64,{frames[j]}",
-                    "detail": "high"}
-                }
-            )
-        prompt.append({
-            "role": "user",
-            "content": images
-        })
         prompt_test_index += 1
 
         # Now add pseudo labels to the prompt:

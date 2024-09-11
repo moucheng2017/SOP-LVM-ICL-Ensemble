@@ -2,7 +2,7 @@ resume_testing_path: /home/moucheng/projects/screen_action_labels/results/172546
 model_name: "gemini-1.5-flash"
 # api_key: AIzaSyDlxCnNI6feVTbRfnVJ-JXMGXeJ3dx4s6c # Ask Sam for your api key
 api_key: AIzaSyBZsZSfTumWZNRnN13PDH4LN8FOKUcss8M
-train_screenshots_txt: /home/moucheng/projects/screen_action_labels/data/split/Wonderbread/1723811870.4719887/training_data_bs25_sd42/batch_0.txt
+train_screenshots_txt: /home/moucheng/projects/screen_action_labels/data/split/Wonderbread/1723811870.4719887/training_data_bs25_sd42/batch_1.txt
 test_screenshots_txt: /home/moucheng/projects/screen_action_labels/data/split/Wonderbread/1723811870.4719887/testing/screenshots.txt
 save_path: ../../results # change this to your own path
 max_tokens: 2000 # normally less than 4000

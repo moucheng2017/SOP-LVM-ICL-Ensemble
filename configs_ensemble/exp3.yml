@@ -1,22 +1,20 @@
+# Ensemble learning from bs8 batch0, batch1, batch2, batch10
+model_name: "gpt-4o-mini" # gpt-4o-mini
+api_key: sk-proj-ZxH9n4f7EHjWlCBo0bdjT3BlbkFJzpfDqdqNHisk1b56DZoM # Ask Sam for your api key
+test_screenshots_txt: /home/moucheng/projects/screen_action_labels/data/split/Wonderbread/1723811870.4719887/testing/screenshots.txt # change this to your own path
 resume_testing_path: 
-model_name: "gemini-1.5-flash"
-api_key: AIzaSyBZsZSfTumWZNRnN13PDH4LN8FOKUcss8M
-test_screenshots_txt: /home/moucheng/projects/screen_action_labels/data/split/Wonderbread/1723811870.4719887/testing/screenshots.txt
 save_path: ../../../results # change this to your own path
-max_tokens: 4096 # normally less than 4000
-temperature_majority_voting: 1.0 # normally less than 1
-temperature: 1.0
-top_p_majority_voting: 0.95 # < 1.0
-top_p_self_reflect: 0.95 # < 1.0
-majority_voting_candidates: 1
-
-pseudo_labels_path_list: 
-  - /home/moucheng/projects/screen_action_labels/results/1725293529/Wonderbread/gold_demos
-  - /home/moucheng/projects/screen_action_labels/results/1725293541/Wonderbread/gold_demos
-  - /home/moucheng/projects/screen_action_labels/results/1725358457/Wonderbread/gold_demos
-
+max_tokens: 4096 # 
+timeout: 2000.0
+temperature: 1.0 # normally less than 1
+top_p: 0.95 # normally less than 1
+image_resize: [1024, 768] # [width, height] [1024, 768]
 debug_mode: false # when used, it will only test on the last video of the testing videos
-seed: 42
+pseudo_labels_path_list: 
+  - /home/moucheng/projects/screen_action_labels/results/1724766837/Wonderbread/gold_demos
+  - /home/moucheng/projects/screen_action_labels/results/1724922859/Wonderbread/gold_demos
+  - /home/moucheng/projects/screen_action_labels/results/1725021923/Wonderbread/gold_demos
+  - /home/moucheng/projects/screen_action_labels/results/1724945161/Wonderbread/gold_demos
 
 prompts: 
   system: > 

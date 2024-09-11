@@ -52,7 +52,7 @@ def preprocess_sop(sop: str) -> List[str]:
     lines = [line.lstrip(" ") for line in lines]
 
     # Remove lines that doesn't start with a number
-    lines = [line for line in lines if line.strip()[0].isdigit()]
+    # lines = [line for line in lines if line.strip()[0].isdigit()]
 
     # assert if lins are empty
     assert len(lines) > 0, "SOP is empty"
@@ -215,80 +215,92 @@ if __name__ == "__main__":
     # ==========================================================================================
     # set up openai api key in terminal:
     # export OPENAI_API_KEY="sk-proj-ZxH9n4f7EHjWlCBo0bdjT3BlbkFJzpfDqdqNHisk1b56DZoM"
-    predictions_folder = "/home/moucheng/projects/screen_action_labels/results/1725293519/Wonderbread/gold_demos"
+    # predictions_folder = "/home/moucheng/projects/screen_action_labels/results/1725293519/Wonderbread/gold_demos"
     gt_folder = "/home/moucheng/projects/screen_action_labels/data/Wonderbread/gold_demos"
     task_name = "Wonderbread_gold_demos_507"
-    ablation = "gemini1.5flash"
-    
+    # ablation = "gemini1.5flash"
+
+    predictions_folder = ["/home/moucheng/projects/screen_action_labels/results/1725985669/Wonderbread/gold_demos"]
+
     # ==========================================================================================
     # ==========================================================================================
+    # ==========================================================================================
+    for prediction in predictions_folder:
+        ablation = prediction.split("/")[-3]
+        print('Starting evaluation of: ', ablation)
+        # evaluate_predictions(prediction, gt_folder, task_name, ablation)
 
-    # Get all videos from predictions folder
-    all_videos = os.listdir(predictions_folder)  
-    all_videos.sort()
+        # Get all videos from predictions folder
+        all_videos = os.listdir(prediction)  
+        all_videos.sort()
 
-    # if test_no is not None:
-    #     all_videos = all_videos[:test_no]
-    
-    # Create list to store collected SOP pairs
-    sops = []
-
-    # For each video in the predictions folder:
-    for i, video in tqdm(enumerate(all_videos)):
-        prediction_path = os.path.join(predictions_folder, video, "label_prediction.txt")
-        gt_path = os.path.join(gt_folder, video)
-        gold_sop = read_labels(gt_path)
+        # if test_no is not None:
+        #     all_videos = all_videos[:test_no]
         
-        # Load the prediction
-        with open(prediction_path, "r") as f:
-            pred_sop = f.read()
+        # Create list to store collected SOP pairs
+        sops = []
+
+        # For each video in the predictions folder:
+        for i, video in tqdm(enumerate(all_videos)):
+            prediction_path = os.path.join(prediction, video, "label_prediction.txt")
+            gt_path = os.path.join(gt_folder, video)
+            gold_sop = read_labels(gt_path)
+            
+            # Load the prediction
+            with open(prediction_path, "r") as f:
+                pred_sop = f.read()
+            
+            # remove first line which is a title in both pred_sop and gold_sop
+            gold_sop = "\n".join(gold_sop.split("\n")[1:])
+            # pred_sop = "\n".join(pred_sop.split("\n")[1:])
+            
+            # Check if pred_sop is empty or gold_sop is empty:
+            if pred_sop != "" and gold_sop != "":
+                # Add an instance with rank_2 as the pred_sop and rank_1 as the gold_sop
+                video = video.replace("@", "")
+                video = video.replace(" ", "-") 
+                sops.append(
+                    {
+                        "pred_sop": pred_sop,
+                        "gold_sop": gold_sop,
+                        "cache_id": task_name,
+                        "demo_name": video,
+                        "ablation": ablation
+                    }
+                )
+
+        results = evaluate_sops(list_of_sops=sops, experiment_name=task_name)
+
+        # save the results csv into the prediction_folder:
+        save_folder = "/".join(prediction.split("/")[:-2])
+        # make a subfolder called evals + timestamp:
+        import time
+        time = int(time.time())
+        save_folder = os.path.join(save_folder, "evals" + str(time)) 
+        os.makedirs(save_folder, exist_ok=True)
+        # sort the results by demo_name:
+        results = results.sort_values(by="demo_name")
+        results.to_csv(os.path.join(save_folder, "results_evals_full.csv"), index=False)
+
+        # from results only get columns: demo_name, ablation, precision, recall, ordering:
+        results = results[["demo_name", "ablation", "precision", "recall", "ordering"]]
+        # add a new row in the bottom by copying the last row:
+        results.loc[len(results)] = results.iloc[-1]
+        # change the "demo_name" of the last row to "average":
+        results.loc[len(results)-1, "demo_name"] = "average"
+        # for precision, recall, ordering, calculate the average and put in the last row:
+        results.loc[len(results)-1, "precision"] = results["precision"].mean()
+        results.loc[len(results)-1, "recall"] = results["recall"].mean()
+        results.loc[len(results)-1, "ordering"] = results["ordering"].mean()
+        results.to_csv(os.path.join(save_folder, "results_evals_simple.csv"), index=False)
+
+        # print the results:
+        print(results)
+
+        print("Evaluation completed for: ", ablation)
+        print("Results saved in: ", save_folder)
+        print("=====================================================================")
         
-        # remove first line which is a title in both pred_sop and gold_sop
-        # gold_sop = "\n".join(gold_sop.split("\n")[1:])
-        # pred_sop = "\n".join(pred_sop.split("\n")[1:])
-        
-        # Check if pred_sop is empty or gold_sop is empty:
-        if pred_sop != "" and gold_sop != "":
-            # Add an instance with rank_2 as the pred_sop and rank_1 as the gold_sop
-            video = video.replace("@", "")
-            video = video.replace(" ", "-") 
-            sops.append(
-                {
-                    "pred_sop": pred_sop,
-                    "gold_sop": gold_sop,
-                    "cache_id": task_name,
-                    "demo_name": video,
-                    "ablation": ablation
-                }
-            )
-
-    results = evaluate_sops(list_of_sops=sops, experiment_name=task_name)
-
-    # save the results csv into the prediction_folder:
-    save_folder = "/".join(predictions_folder.split("/")[:-2])
-    # make a subfolder called evals + timestamp:
-    import time
-    time = int(time.time())
-    save_folder = os.path.join(save_folder, "evals" + str(time)) 
-    os.makedirs(save_folder, exist_ok=True)
-    # sort the results by demo_name:
-    results = results.sort_values(by="demo_name")
-    results.to_csv(os.path.join(save_folder, "results_evals_full.csv"), index=False)
-
-    # from results only get columns: demo_name, ablation, precision, recall, ordering:
-    results = results[["demo_name", "ablation", "precision", "recall", "ordering"]]
-    # add a new row in the bottom by copying the last row:
-    results.loc[len(results)] = results.iloc[-1]
-    # change the "demo_name" of the last row to "average":
-    results.loc[len(results)-1, "demo_name"] = "average"
-    # for precision, recall, ordering, calculate the average and put in the last row:
-    results.loc[len(results)-1, "precision"] = results["precision"].mean()
-    results.loc[len(results)-1, "recall"] = results["recall"].mean()
-    results.loc[len(results)-1, "ordering"] = results["ordering"].mean()
-    results.to_csv(os.path.join(save_folder, "results_evals_simple.csv"), index=False)
-
-    # print the results:
-    print(results)
 
     # # For each folder in the example_sops directory
     # for folder in os.listdir("./example_sops"):
