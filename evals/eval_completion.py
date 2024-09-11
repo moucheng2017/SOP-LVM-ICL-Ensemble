@@ -9,6 +9,7 @@ from typing import Optional
 from helpers import fetch_openai_json_completion, _fetch_geminipro_completion
 import os
 import json
+import random
 
 # LLM Completion Cache
 SOP_CACHE_DIR = "." + os.path.sep + "sop_cache"
@@ -72,9 +73,14 @@ def get_completion(
 
     # Load the completion as a dictionary
     completion = json.loads(completion)
+    print(f"Completion: {completion}")
 
     # Add the prompt_name to the completion
     completion["prompt_name"] = prompt_name
+
+    # Check if the completion has an index, if it doesn't, add a random one between 0 and the length of the SOP
+    if "index" not in completion:
+        completion["index"] = str(random.randint(0, len(prompt.split("\n"))))
 
     # Convert the index to an integer
     completion["index"] = int(completion["index"])

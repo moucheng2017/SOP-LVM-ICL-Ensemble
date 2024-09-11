@@ -1,14 +1,13 @@
 resume_testing_path: 
-model_name: "gemini-1.5-flash"
-api_key: AIzaSyBZsZSfTumWZNRnN13PDH4LN8FOKUcss8M
+model_name: "gpt-4o-mini"
+api_key: sk-proj-ZxH9n4f7EHjWlCBo0bdjT3BlbkFJzpfDqdqNHisk1b56DZoM
 test_screenshots_txt: /home/moucheng/projects/screen_action_labels/data/split/Wonderbread/1723811870.4719887/testing/screenshots.txt
 save_path: ../../../results # change this to your own path
-max_tokens: 4096 # normally less than 4000
-temperature_majority_voting: 1.0 # normally less than 1
-temperature: 1.0
-top_p_majority_voting: 0.95 # < 1.0
-top_p_self_reflect: 0.95 # < 1.0
-majority_voting_candidates: 1
+max_tokens: 4096 # 
+timeout: 2000.0
+temperature: 1.0 # normally less than 1
+top_p: 0.95 # normally less than 1
+image_resize: [1024, 768] # [width, height] [1024, 768]
 
 pseudo_labels_path_list: 
   - /home/moucheng/projects/screen_action_labels/results/1725293529/Wonderbread/gold_demos
@@ -20,19 +19,19 @@ seed: 42
 
 prompts: 
   system: > 
-   Your job is to write a standard operating procedure (SOP) for a workflow based on the given screenshots.
+   Your job is write standard operating procedure (SOP) for a workflow, by merging the given pseudo labels of actions.
    The SOP should contain a numerated list of actions taken by the user to complete the given workflow.
+   Read carefully the numerated pseudo labels, keep the common actions, fill the missing actions, then write the SOP.
   testing_example: >
-    You are given the following sequence of screenshots which were sourced from a demonstration of the workflow. 
-    You are also given some pseudo labels of the workflow as priors to help you to write your SOP. 
-    The screenshots are presented in chronological order.
-    Here are the screenshots of the workflow:
+    You are given the following pseudo labels of the workflow as priors to help you to write your SOP. 
+    The pseudo label describes the chronological order of actions taken by the user to complete the workflow.
   question: >
-    Given what you observe in the sequence frames of actions and the referencing pseudo laebls of the actions, write an SOP for completing the workflow. 
+    Given the pseudo labels of actions, write an SOP for completing the workflow. 
     The SOP should simply contain an enumerated list of actions taken by the user to complete the given workflow.
     In your SOP, list all of the actions taken (i.e., buttons clicked, fields entered, mouse scrolls etc.). 
     Be descriptive about elements (i.e., 'the subheading located under the "General" section'). 
     Use the location of the mouse to identify which exact elements were clicked.
     Stick with the format of the pseudo labels.
     Be as detailed as possible. Each step should be a discrete action that reflects what you see in the corresponding step. Don't skip steps.
+    Don't include high level summaries or generalizations. 
     Please write your SOP below:

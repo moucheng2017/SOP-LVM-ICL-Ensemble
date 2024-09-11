@@ -272,8 +272,7 @@ def main_gpt(args):
                 "top_p": config['top_p_self_reflect']
             }
             
-            reflection_result = client.chat.completions.create(**reflection_params, timeout=60)
-            final_prediction = reflection_result.choices[0].message.content
+            final_prediction = openai_completion(client, reflection_params)
             time.sleep(60)
         else:
             final_prediction = initial_prediction

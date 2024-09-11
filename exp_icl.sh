@@ -1,3 +1,5 @@
+# Description: This script is used to run experiments with different training data files.
+
 #!/bin/bash
 
 # The config file template to be used for the experiment is: /home/moucheng/projects/screen_action_labels/code/action-labelling/configs/wonderbread_icl.yml
@@ -9,8 +11,12 @@ TRAINING_DATA_FOLDER="/home/moucheng/projects/screen_action_labels/data/split/Wo
 # List all txt files in the training data folder
 TRAINING_FILES=($(ls $TRAINING_DATA_FOLDER/*.txt))
 
+# ====================================================================================
 # In the above List of txt files, the files are called "batch_0.txt", "batch_1.txt", "batch_2.txt", etc.
 # Get a new training_batches list containing user specified training batches:
+# ====================================================================================
+# Change here:
+# ====================================================================================
 Training_batchs=(0 1 2)
 
 # Get the training data files corresponding to the training batches

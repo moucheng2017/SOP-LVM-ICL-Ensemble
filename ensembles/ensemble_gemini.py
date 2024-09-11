@@ -13,7 +13,7 @@ import google.generativeai as genai
 from google.generativeai import GenerationConfig
 import argparse
 
-# Ensemble predctions as priors for GPT4o-mini:
+# Ensemble predctions as priors for gemini 1.5 flash
 # 1. For each video, read the frames first
 # 2. For each video, read all of available predictions as pseudo labels
 # 3. For each video, prompt GPT4o-mini with the frames and pseudo labels
@@ -168,7 +168,7 @@ def main(args):
                         pseudo_labels = pseudo_labels_video_path / 'label_prediction.txt'
                         pseudo_labels = Path(pseudo_labels).read_text()
                         pseudo_labels = preprocess_pseudo_labels(pseudo_labels)
-                        pseudo_labels = "The following is a pseudo label of actions for the above frames that you can use as a prior reference:" + '\n' + pseudo_labels
+                        pseudo_labels = f"Here is pseudo label {i} of actions for the above frames:" + '\n' + pseudo_labels
                         # print(f"Pseudo labels {i+1}: {pseudo_labels}")
                         prompt.append({
                             "role": "user",

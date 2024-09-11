@@ -6,6 +6,11 @@ data/
 .venv/
 dir/env/
 
+# sop_cahe
+sop_cache/
+evals/sop_cache/
+evals/__pycache__/
+
 # ignore split files
 split/
 
