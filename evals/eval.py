@@ -5,6 +5,7 @@ This script is utilized to perform automatic evaluation of the generated SOPs
 through comparison with the gold standard SOPs. Various evaluation metrics are
 calculated and logged in a CSV file.
 """
+
 import sys
 import os
 import concurrent.futures
@@ -15,20 +16,22 @@ import os
 from tqdm import tqdm
 from metrics import PairwiseComparison
 
+
 def read_labels(folder_path):
-    label_path = [f for f in os.listdir(folder_path) if f.endswith('.txt')][0]
+    label_path = [f for f in os.listdir(folder_path) if f.endswith(".txt")][0]
     label_path = os.path.join(folder_path, label_path)
     try:
-        labels = open(label_path, 'r').read()
+        labels = open(label_path, "r").read()
         # print(f"Read labels from {label_path}:")
         # print(labels)
         return labels
     except Exception as e:
         print(f"Error reading {label_path}: {e}")
         return None
-    
+
+
 # PREPROCESSING ===============================================================
-def preprocess_sop(sop: str) -> List[str]:
+def preprocess_sop(sop: str, data: dict) -> List[str]:
     """
     Given a SOP, this function preprocesses the SOP and returns a list of
     sentences.
@@ -60,7 +63,7 @@ def preprocess_sop(sop: str) -> List[str]:
     # If the line starts with * or -, remove it
     # lines = [line[1:] if line[0] in ["*", "-"] else line for line in lines]
     # lines = [line[1:] if line[0] in ["*", "-"] else line for line in lines]
-    
+
     # Remove lines that doesn't start with a number
     # lines = [line for line in lines if line.strip()[0].isdigit()]
 
@@ -72,27 +75,36 @@ def preprocess_sop(sop: str) -> List[str]:
 
     # # Remove line if it is empty
     lines = [line for line in lines if len(line) > 0]
-    
+
     # Print the preprocessed SOP
     # print("\n".join(lines))
     # print("\n\n\n")
-    
+
     return lines
 
 
 # LLM INFRA ===============================================================
 
 
+def _check_sop(sop_dict) -> dict | None:
+    try:
+        pred_sop = preprocess_sop(sop_dict["pred_sop"], sop_dict)
+        gold_sop = preprocess_sop(sop_dict["gold_sop"], sop_dict)
+        return None
+    except AssertionError:
+        return sop_dict
+
+
 def _evaluate_sops(sop_dict):
     """Helper function to evaluate a single pair of SOPs. Çalled in parallel in `evaluate_sops`."""
-    
+
     # print(sop_dict["experiment_name"])
     # print(type(sop_dict["experiment_name"]))
 
     # Preprocess the SOPs
-    pred_sop = preprocess_sop(sop_dict["pred_sop"])
-    gold_sop = preprocess_sop(sop_dict["gold_sop"])
-    
+    pred_sop = preprocess_sop(sop_dict["pred_sop"], sop_dict)
+    gold_sop = preprocess_sop(sop_dict["gold_sop"], sop_dict)
+
     # Create a cache_id for saving prompt eval results
     cache_id: str = (
         sop_dict["experiment_name"]
@@ -209,7 +221,6 @@ def add_gold_sops(df_all_results: pd.DataFrame, path_to_demos_dir: str) -> pd.Da
 
 
 if __name__ == "__main__":
-    
     # ==========================================================================================
     # Change here:
     # ==========================================================================================
