@@ -231,7 +231,7 @@ if __name__ == "__main__":
     task_name = "Wonderbread_gold_demos_507"
     # ablation = "gemini1.5flash"
 
-    predictions_folder = ["/home/moucheng/projects/screen_action_labels/results/1725985669/Wonderbread/gold_demos"]
+    predictions_folder = ["/home/moucheng/projects/screen_action_labels/results/1726068460/Wonderbread/gold_demos"]
 
     # ==========================================================================================
     # ==========================================================================================
