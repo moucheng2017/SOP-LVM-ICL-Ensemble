@@ -1,4 +1,4 @@
-resume_testing_path: 
+resume_testing_path: /home/moucheng/projects/screen_action_labels/results/1726068460/Wonderbread/gold_demos
 model_name: "gemini-1.5-flash"
 # api_key: AIzaSyDlxCnNI6feVTbRfnVJ-JXMGXeJ3dx4s6c # Ask Sam for your api key
 api_key: AIzaSyBZsZSfTumWZNRnN13PDH4LN8FOKUcss8M

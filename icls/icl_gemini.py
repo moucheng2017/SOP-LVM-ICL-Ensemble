@@ -251,7 +251,7 @@ def main_gemini(args):
                 "parts": str(config['prompts']['reflection'].format(initial_prediction=initial_prediction))
             })
                         
-            for try_time in range(5): # Try 5 times
+            for try_time in range(10): # Try 5 times
                 try:                    
                     response = model.generate_content(reflection_prompt,
                                                       generation_config=generation_config,
