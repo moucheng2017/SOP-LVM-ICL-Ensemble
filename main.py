@@ -16,8 +16,10 @@ if __name__ == "__main__":
     args = parser.parse_args()
 
     config = load_config(args.config)
+    
     if "gpt" in config["model_name"].lower():
         main_gpt(args)
+
     if "cog" in config["model_name"].lower():
         main_cogvlm2_video(args)
     
