@@ -240,8 +240,8 @@ def main_gpt(args):
             "model": config['model_name'],
             "messages": prompt,
             "max_tokens": int(config['max_tokens']),
-            "temperature": config['temperature_majority_voting'],
-            "top_p": config['top_p_majority_voting'],
+            "temperature": config['temperature'],
+            "top_p": config['top_p'],
             "timeout": config['timeout']
         }
         
@@ -268,8 +268,8 @@ def main_gpt(args):
                 "model": config['model_name'],
                 "messages": reflection_prompt,
                 "max_tokens": int(config['max_tokens']),
-                "temperature": config['temperature_self_reflect'],
-                "top_p": config['top_p_self_reflect']
+                "temperature": config['temperature_reflect'],
+                "top_p": config['top_p_reflect']
             }
             
             final_prediction = openai_completion(client, reflection_params)

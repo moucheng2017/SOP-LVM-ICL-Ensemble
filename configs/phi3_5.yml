@@ -1,17 +1,15 @@
 model_name: microsoft/Phi-3.5-vision-instruct
 train_screenshots_txt: data_splits/gold_demos/training/screenshots.txt
 test_screenshots_txt: data_splits/gold_demos/testing/screenshots.txt
-train_labels_txt: data_splits/gold_demos/training/labels.txt
-# resume_testing_path: results/1722441353/Wonderbread/debug_demos
-save_path: results
-# max_tokens: 4096 # normally less than 4000
+# resume_testing_path: 
+save_path: ../../results
 max_new_tokens: 300
 in_context_learning: false # flag to use in context learning for fine tuning
 effective_train_videos_number: 1
-temperature_majority_voting: 0.5 # normally less than 1
-temperature_self_reflect: 0.1 # normally less than 1
-top_p_majority_voting: 0.5 # normally less than 1
-top_p_self_reflect: 0.9 # normally less than 1
+temperature: 1.0 
+top_p: 0.9 
+temperature_reflect: 0.5 
+top_p_reflect: 0.99
 repetition_penalty_majority_voting: 1.5
 repetition_penalty_self_reflect: 1.5
 majority_voting_candidates: 1 # number of candidates for majority voting, if it is 1, it will not use majority voting

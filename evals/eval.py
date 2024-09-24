@@ -226,16 +226,12 @@ if __name__ == "__main__":
     # ==========================================================================================
     # set up openai api key in terminal:
     # export OPENAI_API_KEY="sk-proj-ZxH9n4f7EHjWlCBo0bdjT3BlbkFJzpfDqdqNHisk1b56DZoM"
-    # predictions_folder = "/home/moucheng/projects/screen_action_labels/results/1725293519/Wonderbread/gold_demos"
-    gt_folder = "/home/moucheng/projects/screen_action_labels/data/Wonderbread/gold_demos"
-    task_name = "Wonderbread_gold_demos_507"
-    # ablation = "gemini1.5flash"
-
-    predictions_folder = ["/home/moucheng/projects/screen_action_labels/results/1726068460/Wonderbread/gold_demos"]
-
+    gt_folder = "/home/moucheng/projects/screen_action_labels/data/Wonderbread/gold_demos" # path too the ground truth folder
+    task_name = "Wonderbread_gold_demos_507" # name of the task, used for saving the results
+    predictions_folder = ["/home/moucheng/projects/screen_action_labels/results/1726068460/Wonderbread/gold_demos"] # list of paths to the predictions folder
     # ==========================================================================================
     # ==========================================================================================
-    # ==========================================================================================
+    
     for prediction in predictions_folder:
         ablation = prediction.split("/")[-3]
         print('Starting evaluation of: ', ablation)
@@ -311,48 +307,4 @@ if __name__ == "__main__":
         print("Evaluation completed for: ", ablation)
         print("Results saved in: ", save_folder)
         print("=====================================================================")
-        
-
-    # # For each folder in the example_sops directory
-    # for folder in os.listdir("./example_sops"):
-
-    #     # Load the rank_1.txt file
-    #     with open(f"./example_sops/{folder}/rank_1.txt", "r") as f:
-    #         rank_1 = f.read()
-
-    #     # Load the rank_2.txt file
-    #     with open(f"./example_sops/{folder}/rank_2.txt", "r") as f:
-    #         rank_2 = f.read()
-
-    #     # Load the rank_5.txt file
-    #     with open(f"./example_sops/{folder}/rank_5.txt", "r") as f:
-    #         rank_5 = f.read()
-
-    #     # Save the task number from the folder name
-    #     task = folder.split("_")[1]
-
-    #     # Remove the first line from each SOP
-    #     rank_1 = "\n".join(rank_1.split("\n")[1:])
-    #     rank_2 = "\n".join(rank_2.split("\n")[1:])
-    #     rank_5 = "\n".join(rank_5.split("\n")[1:])
-
-    #     # Add an instance with rank_2 as the pred_sop and rank_1 as the gold_sop
-    #     sops.append(
-    #         {
-    #             "pred_sop": rank_2,
-    #             "gold_sop": rank_1,
-    #             "cache_id": "task_" + task + "_SOP_1_vs_2",
-    #         }
-    #     )
-
-    #     # Add an instance with rank_5 as the pred_sop and rank_1 as the gold_sop
-    #     sops.append(
-    #         {
-    #             "pred_sop": rank_5,
-    #             "gold_sop": rank_1,
-    #             "cache_id": "task_" + task + "_SOP_1_vs_5",
-    #         }
-    #     )
-
-    # # Evaluate the SOPs
-    # evaluate_sops(sops)
+  

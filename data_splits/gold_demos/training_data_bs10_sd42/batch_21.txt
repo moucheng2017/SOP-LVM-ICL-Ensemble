@@ -1,7 +1,0 @@
-data/demos/gold_demos/360 @ 2024-01-05-14-58-44/screenshots
-data/demos/gold_demos/677 @ 2024-01-05-19-07-28/screenshots
-data/demos/gold_demos/240 @ 2023-12-29-09-15-43/screenshots
-data/demos/gold_demos/350 @ 2024-01-04-18-16-40/screenshots
-data/demos/gold_demos/1 @ 2023-12-25-15-44-04/screenshots
-data/demos/gold_demos/521 @ 2024-01-07-20-51-07/screenshots
-data/demos/gold_demos/62 @ 2024-01-05-04-12-04/screenshots

@@ -1,123 +1,135 @@
-## Introduction
-This project focuses on improving the LMM's ability at low-level understanding of workflows. The key idea is to learn to ensemble the predictions of individually fine-tuned LMMs, of which is fine-tuned with different training samples. It is known that more training samples result in better fine-tuned model. However the context window length limits the number of the training samples. We expect that, ensembling the predictions is equivalent to ensembling the training samples in order to breakthrough the context window length limit.  
+# Introduction
+This is an implementation of the paper **In-Context Ensemble Improves Video-Language Models for Low-Level Workflow Understanding from Human Demonstrations**. 
 
-## Methods
-The current pipeline only has the in-context learning part. The LMM observes a few training examples as prompts first. Then the LMM got asked to predict for new cases. See the below sections of prompts for more details.
+# Abstract
+**SOP Generation Task:** A Standard Operating Procedure (SOP) defines a low-level, step-by-step written guide for a business software workflow based on a video demonstration. SOPs are a crucial step toward automating end-
+to-end software workflows. Manually creating SOPs can be time-consuming. Recent advancements
+in large video-language models offer the potential for automating SOP generation by analyzing
+recordings of human demonstrations. However, current large video-language models face challenges
+with zero-shot SOP generation. We explore in-context learning with video-language models for
+SOP generation. We report that in-context learning sometimes helps video-language models at SOP
+generation. We then propose an in-context ensemble learning to further enhance the capabilities of
+the models in SOP generation. 
 
-## Install the libraries
-Given that you have installed python==3.11.2. If you don't have virtual environment, then install it via following lines. Specifiy your own "your_project_directory".
+**Multimodal In-Context Ensemble (ICE):** Our proposed in-context ensemble learning provides the video-language models with video inputs, along with text-based pseudo labels of actions, enabling the models to learn from more examples beyond their context window limit, with a regularisation effect. The pipeline is illustrated in below:
+![ICE](figures/ice.png "Plot of ICE pipeline.")
+
+# Features
+- Support zero-shot, few-shot, ensemble, multimodal in-context ensemble with OpenAI [GPT-4o-mini](https://openai.com/index/gpt-4o-mini-advancing-cost-efficient-intelligence/)
+- Support zero-shot, few-shot, ensemble, multimodal in-context ensemble with Google [Gemini-1.5-flash](https://deepmind.google/technologies/gemini/flash/)
+- Support zero-shot, few-shot, ensemble, multimodal in-context ensemble with public [CogAgent2](https://github.com/THUDM/CogVLM2)
+- Support zero-shot, few-shot, ensemble, multimodal in-context ensemble with Microsoft [Phi3.5](https://huggingface.co/microsoft/Phi-3.5-vision-instruct)
+
+# Context & Structure
+- [**analysis**](./analysis/): the folder containing the code we used for results analysis
+- [**configs**](./configs/): the folder containing config files we used for SOP generation with different models
+- [**configs_ensemble**](./configs_ensemble/): the folder containing config files we used for different ensembles with different models
+- [**data_preprocessing**](./data_preprocessing/): the folder containing data downloading, train/test data split
+- [**data_splits**](./data_splits/): the folder containing the data splits txts we used in our paper, the paths in those txts are absolute paths so will not work on your data
+- [**ensembles**](./ensembles/): the folder containing the code for ensemble and in-context ensemble
+- [**evals**](./evals/): the folder containing the code for evaluation of generated SOPs against gold SOPs
+- [**icls**](./icls/): the folder containing the code for different models in SOP generation
+- [**main.py**](./main.py): the main file for calling different models in icls for SOP generation
+- [**helpers.py**](./helpers.py): the code containing small supporting functions
+- [**exp.sh**](./exp.sh): the bash file for running SOP generation experiments in linux
+- [**exp_icl.sh**](./exp_icl.sh): the bash file for running different batches of multimodal in-context learning in linux
+
+# Results
+Beneath is the testing results on 507 videos from the "Gold Demo" subset of WONDERBREAD benchmark. Our evaluation is more challenging than the original one as we only feed videos into the models, *without* trace information (e.g. mouse clicks). **ICL**: in-context learning. **ICE**: in-context ensemble. **Ensemble**: majority voting of pseudo labels:
+| **Method** | **Training Data** | **Precision (%)**  | **Recall (%)**  | **Temporal Order (%)** |
+|------------|-------------------|-----------------------------|--------------------------|-----------------------------------|
+| **GPT-4o mini** | 
+| zero-shot  | n/a               | 42.62                       | 78.13                    | 32.93                             |
+| 8-shot ICL | Batch 1           | 43.16                       | 78.13                    | 33.46                             |
+| 8-shot ICL | Batch 2           | **45.95 (+3.33)**           | 78.13                    | 34.15                             |
+| 8-shot ICL | Batch 3           | 44.51                       | 78.13                    | 33.08                             |
+| Ensemble   | Batch 1 - 3       | 36.05                       | 72.31                    | 21.47                             |
+| **ICE (Ours)**    | Batch 1 - 3       | 44.34 (+1.72)               | **84.79 (+6.66)**        | **37.17 (+4.24)**                 |
+| **Gemini-1.5 flash** |
+| zero-shot  | n/a               | 34.35                       | 45.16                    | 27.82                             |
+| 8-shot ICL | Batch 1           | 34.10                       | 45.18                    | 35.15                             |
+| 8-shot ICL | Batch 2           | 33.99                       | 41.96                    | 29.42                             |
+| 8-shot ICL | Batch 3           | 34.08                       | 40.75                    | 29.77                             |
+| 24-shot ICL| Batch 1 - 3       | 29.75                       | 39.42                    | 26.47                             |
+| Ensemble   | Batch 1 - 3       | 30.30                       | 40.52                    | 26.12                             |
+| **ICE (Ours)**    | Batch 1 - 3       | **40.77 (+6.42)**           | **54.38 (+9.22)**        | **35.89 (+8.07)**                 |
+| **GPT-4o mini + Gemini-1.5 flash** |
+| **ICE (Ours)**    | Batch 1 - 3       | 41.54                       | 83.34                    | 34.33                             |
+| **Phi-3.5** |
+| zero-shot  | n/a               | 31.66                       | 45.88                    | 24.42                             |
+
+# Installment
+For using GPT-4o-mini and Gemini-1.5-flash, please install the libraries with [`requirements.txt`](./requirements.txt):
 ```bash
 pip install virtualenv
 cd your_project_directory
 virtualenv venv
 virtualenv -p python venv
-python -m venv venv
+python3 -m venv venv
+source venv/bin/activate
+pip install -r requirements.txt
 ```
-If you already have virtual environment, install the libraries via the following lines. You can change "myenv" to your own choice. You are welcome to use conda but conda might take more spaces.
+For the additional use of public models, Phi-3.5 and CogAgent2, please also install extra libraries with [`requirements-cogagent.txt`](./requirements-cogagent.txt):
 ```bash
-virtualenv -p python myenv
-python -m venv venv
+source venv/bin/activate
+pip install --ignore-installed -r requirements-cogagent.txt
 ```
 
-## Data
-We are currently using a toy dataset of screenshots of user actions on Notepad application. Download the dataset from beneath google drive link:
-https://drive.google.com/drive/folders/1TSO4qZZniJVwQDs99udxMd_G9nNJii9p?usp=drive_link
-
-The above dataset is structured as:
+# Data
+We are currently using a subset called "Gold Demos" from the WONDERBREAD benchmark. The folder "Gold Demos" contains 724 videos. Each video folder contains a subfolder called "screenshots" and a txt file starting with "SOP" which is the ground truth of SOP. We provide a bash file for downloading the data in [`data_preprocessing/download_wonderbread.sh`](./data_preprocessing/download_wonderbread.sh)
 ```
-data_directory/
+Wonderbread_gold_demos/
 │
-├── training/
-│ ├── video1/
-│ │ ├── screenshots/
-│ │ │ │ ├── image1.png
-│ │ │ │ ├── image2.png
-│ │ │ │ ├── image3.png
-│ │ ├── label.txt
-│ ├── video2/
-│ ├── video3/
-...
-├── testing/
-│ ├── video1/
-│ │ ├── screenshots/
-│ │ │ │ ├── image1.png
-│ │ │ │ ├── image2.png
-│ │ │ │ ├── image3.png
-│ ├── video2/
-│ ├── video3/
+├── 0 @ 2023-12-25-15-10-58/
+│   ├── screenshots/
+│   │   ├── 0.png
+│   │   ├── 1.png
+│   │   ├── 2.png
+│   │   ├── ...
+│   |── SOP - 0 @ 2023-12-25-15-10-58.txt
+├── 0 @ 2023-12-25-16-43-12/
+├── 1 @ 2023-12-25-15-44-04/
 ...
 ```
 
-The dataloader reads a txt file for videos so that we can arbitrary data splits without saving the data for each split.
-
-## How to start with this git repo:
-Please have a closer look at the default config file in "configs/example.yml". To run the current pipeline, you can run the main function via:
+# Quickstart for SOP generation
+1. Download the data via [`data_preprocessing/download_wonderbread.sh`](./data_preprocessing/download_wonderbread.sh). 
+2. Prepare your data splits via [`data_preprocessing/data_split.py`](./data_preprocessing/data_split.py). 
+3. Prepare further split of training data into batches via [`data_preprocessing/train_data_split.py`](./data_preprocessing/train_data_split.py).
+4. Choose a config template in [`configs`](./configs/) and change the data paths and hyper-parameters within that config. Then run the main function with the config file:
 ```bash
 cd your_own_working_directory_of_this_repository
-python main.py --config configs/example.yml
-```
-Modify the config file to your own specifications. The used config files will always be saved in the result folder so you can always reproduce your results. It is suggested to create new config files for new experiments. Feel free to experiment any cool prompts you want!
-
-## How to start new tasks within this repo:
-1. Go to "Issues" on the github repo: https://github.com/mcx-agile-loop/action-labelling/issues
-2. Create a new issue with whatever your new task is
-3. Create a new branch from the new issue
-4. Work on your own branch
-
-Always make sure your are using the latest git repo by "git fetch" and always work on your own local branch.
-
-<!-- ## The current prompts for training:
-```
-You are a labelling assistant to label the user interactions with the screen for every screenshot in the chronological screenshots. Each screenshot is a state of the screen at a certain time. The label for each state should only describe the user's last actions which changed the last state of the screen to the current state of the screen. 
-Each screenshot should have one label. In each label, describe: the user action just happened, the screen display change, and the current screen display.
-Do not skip any intermediate actions.
-Be specific, precise and accurate.
-
-The following is {number_frames} chronological screenshots and their labels:
-{image0.png}
-{image1.pmng}
-...
-{image24.pnt}
-
-The following is the labels for the above sequence of screenshots:
-label0
-label1
-...
-label24
-
-``` -->
-
-<!-- ## The current prompts for testing:
-```
-The following is {number_frames} chronological screenshots:
-{image0.png}
-{image1.pmng}
-...
-{image10.pnt}
-
-Please provide the labels for each state in the above screenshots by fulfilling the beneath template:
----START FORMAT TEMPLATE---
-State0:
-State1:
-...
-State10:
----END FORMAT TEMPLATE---
-Do not deviate from the above format.
-``` -->
-
-## The current prompts for self-reflection:
-```
-The initial prediction is:
-{initial_prediction}
-Please review the screenshots and their prediction. Provide an improved version of the prediction if necessary.
+python main.py --config configs/gpt4omini.yml
 ```
 
-## Evaluation
-In the subfolder called evals, change the parameters in the evals.py first. Set up the api key then run the eval.py.
+# Evaluation
+1. Change the results paths and ground truth path in:
+ [`evals/eval.py`](./evals/eval.py).
+2. Export your openai key:
 ```
 export OPENAI_API_KEY="some-some-key"
+```
+3. Run the following code within the evals folder:
+```
+cd your_own_working_directory_of_this_repository
+cd evals
 python evals/eval.py
 ```
+**Metrics**: Precision measures how many steps in the prediction match those in the gold standard SOP. Recall measures how many steps of the gold standard SOP are included in the predictions. Temporal order evaluates whether the sequence of steps in the prediction aligns with the sequence in the gold standard SOP.
 
-## Contacts
-Contact Moucheng Xu for any questions: xumoucheng28@gmail.com
+# Acknowledgement & Contacts
+**Moucheng Xu**: Conceptualization, Methodology, Project administration, Implementation, Integration, Experiments, Formal analysis, Writing of the manuscript. **Evangelos Chatzaroulas**: Implementation of ICL with Phi-3.5 and CogAgent, Experiments, Writing of the manuscript. **Luc McCutcheon**: Implementation of ICL with Gemini-1.5-flash, Writing of the manuscript. **Abdul Ahad, Hamzah Azeem, Janusz Marecki, Ammar Anwar**: Resources, Writing of the manuscript. 
+
+Contact [Moucheng Xu](https://scholar.google.com/citations?hl=en&user=7uJJaLIAAAAJ&view_op=list_works) for any questions: xumoucheng28@gmail.com
+
+<!-- ## Citation
+Please consider citing the following if you found this work or code helpful!
+
+```
+@article{zhou2023webarena,
+  title={WebArena: A Realistic Web Environment for Building Autonomous Agents},
+  author={Zhou, Shuyan and Xu, Frank F and Zhu, Hao and Zhou, Xuhui and Lo, Robert and Sridhar, Abishek and Cheng, Xianyi and Bisk, Yonatan and Fried, Daniel and Alon, Uri and others},
+  journal={arXiv preprint arXiv:2307.13854},
+  year={2023}
+}
+``` -->

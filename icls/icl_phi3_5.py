@@ -313,8 +313,8 @@ def main_phi3_5(args):
             for _ in range(num_inferences):
                 params = {
                     "max_new_tokens": int(config["max_new_tokens"]),
-                    "temperature": config["temperature_majority_voting"],
-                    "top_p": config["top_p_majority_voting"],
+                    "temperature": config["temperature_reflect"],
+                    "top_p": config["top_p_reflect"],
                     "repetition_penalty": config["repetition_penalty_majority_voting"],
                 }
                 prediction = inference_phi3_5(model, tokeinzer, prompt, **params)
@@ -342,8 +342,8 @@ def main_phi3_5(args):
 
                 reflection_params = {
                     "max_new_tokens": int(config["max_new_tokens"]),
-                    "temperature": config["temperature_self_reflect"],
-                    "top_p": config["top_p_self_reflect"],
+                    "temperature": config["temperature"],
+                    "top_p": config["top_p"],
                     "repetition_penalty": config["repetition_penalty_self_reflect"],
                 }
                 final_prediction = inference_phi3_5(
