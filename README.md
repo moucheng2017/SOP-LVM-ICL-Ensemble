@@ -76,7 +76,7 @@ pip install --ignore-installed -r requirements-cogagent.txt
 ```
 
 # Data
-We are currently using a subset called "Gold Demos" from the WONDERBREAD benchmark. The folder "Gold Demos" contains 724 videos. Each video folder contains a subfolder called "screenshots" and a txt file starting with "SOP" which is the ground truth of SOP. We provide a bash file for downloading the data in [`data_preprocessing/download_wonderbread.sh`](./data_preprocessing/download_wonderbread.sh)
+The [**WONDERBREAD**](https://hazyresearch.stanford.edu/wonderbread-website/) benchmark contains 2928 videos of distinct workflows and their SOPs. We use a subset called "Gold Demos" of 724 videos. We split (random seed 42) the data into two parts, 30\% training (217 videos) and 70\% testing (507 videos). We subsequently split the training data into 28 batches, each batch contains 8 videos. Our split can be found in [`data_split`](./data_splits/). Our data preprocessing including data downloading is in [`data_preprocessing/`](./data_preprocessing/). In the dataset, the videos and their SOPs are organised as in the following:
 ```
 Wonderbread_gold_demos/
 │
@@ -118,7 +118,7 @@ python evals/eval.py
 **Metrics**: Precision measures how many steps in the prediction match those in the gold standard SOP. Recall measures how many steps of the gold standard SOP are included in the predictions. Temporal order evaluates whether the sequence of steps in the prediction aligns with the sequence in the gold standard SOP.
 
 # Acknowledgement & Contacts
-**Moucheng Xu**: Conceptualization, Methodology, Project administration, Implementation, Integration, Experiments, Formal analysis, Writing of the manuscript. **Evangelos Chatzaroulas**: Implementation of ICL with Phi-3.5 and CogAgent, Experiments, Writing of the manuscript. **Luc McCutcheon**: Implementation of ICL with Gemini-1.5-flash, Writing of the manuscript. **Abdul Ahad, Hamzah Azeem, Janusz Marecki, Ammar Anwar**: Resources, Writing of the manuscript. 
+**Moucheng Xu**: Conceptualization, Methodology, Project administration, Implementation, Integration, Data, Experiments, Formal analysis, Writing of the manuscript. **Evangelos Chatzaroulas**: Implementation of ICL with Phi-3.5 and CogAgent, Data, Experiments, Writing of the manuscript. **Luc McCutcheon**: Implementation of ICL with Gemini-1.5-flash, Writing of the manuscript. **Abdul Ahad, Hamzah Azeem, Janusz Marecki, Ammar Anwar**: Resources, Writing of the manuscript. 
 
 Contact [Moucheng Xu](https://scholar.google.com/citations?hl=en&user=7uJJaLIAAAAJ&view_op=list_works) for any questions: xumoucheng28@gmail.com
 
