@@ -337,9 +337,9 @@ def main_cogvlm2_video(args):
             for _ in range(num_inferences):
                 params = {
                     "max_tokens": int(config["max_tokens"]),
-                    "temperature": config["temperature_majority_voting"],
-                    "top_p": config["top_p_majority_voting"],
-                    "repetition_penalty": config["repetition_penalty_majority_voting"],
+                    "temperature": config["temperature"],
+                    "top_p": config["top_p"],
+                    "repetition_penalty": config["repetition_penalty"],
                 }
                 prediction = inference_cogagent(model, tokeinzer, prompt, **params)
                 predictions.append(prediction)
@@ -365,8 +365,8 @@ def main_cogvlm2_video(args):
 
                 reflection_params = {
                     "max_tokens": int(config["max_tokens"]),
-                    "temperature": config["temperature_self_reflect"],
-                    "top_p": config["top_p_self_reflect"],
+                    "temperature": config["temperature_reflect"],
+                    "top_p": config["top_p_reflect"],
                     "repetition_penalty": config["repetition_penalty_reflect"],
                 }
                 final_prediction = inference_cogagent(

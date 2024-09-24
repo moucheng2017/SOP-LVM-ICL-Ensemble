@@ -1,13 +1,16 @@
 # Evaluations
 
-This directory contains scripts to run auto-evaluations of model generated standard operating procedures (SOPs). It contains the following:
+This directory contains scripts to run auto-evaluations of model generated standard operating procedures (SOPs).
 
-Set up your api key first 
+1. Set up your openai api key first in the terminal:
+```
+export OPENAI_API_KEY="your-key"
+```
 
-- [`eval.py`](./eval.py) - The main script used to run auto-evaluations of the model's generated SOPs against the "gold standard" SOPs.
+2. Change the paths in the file 'eval.py' from line 229 to line 231. Then run the eval.py in the folder evals.
 
-- [`metrics.py`](./metrics.py) - Contains functions to calculate various metrics for evaluating the model's generated SOPs.
+<!-- - [`eval.py`](./eval.py) - The main script used to run auto-evaluations of the model's generated SOPs against the "gold standard" SOPs. Change from line 230 in eval.py for your own use. -->
 
-- [`eval_completion.py`](./eval_completion.py) - Contains functions related to fetching and caching evaluation completions from OpenAI's GPT-4 API. 
-
-- [`eval_prompts.py`](./eval_prompts.py) - Contains a class abstraction for generating evaluation prompts for the model's generated SOPs. This class is used by the `eval.py` script to generate prompts for the model's SOPs.
+```
+python eval.py
+```

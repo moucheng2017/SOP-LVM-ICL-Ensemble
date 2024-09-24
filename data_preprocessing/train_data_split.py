@@ -11,7 +11,7 @@ from pathlib import Path
 from tqdm import tqdm
 import argparse
 
-train_txt_full = "/home/moucheng/projects/screen_action_labels/data/split/Wonderbread/1723811870.4719887/training/screenshots.txt"
+train_txt_full = "../data_splits/gold_demos/training/screenshots.txt"
 exclusion_txt_full = None
 batch_size = 25
 random_seed = 42

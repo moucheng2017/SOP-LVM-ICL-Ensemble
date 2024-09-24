@@ -91,7 +91,7 @@ def main(args):
     # Configurations for model inference and safety settings, very important to set up, otherwise the server just randomly block your requests
     generation_config = GenerationConfig(
     temperature=config['temperature'],
-    top_p=config['top_p_majority_voting'],
+    top_p=config['top_p'],
     top_k=32,
     candidate_count=1,
     max_output_tokens=config['max_tokens'])
@@ -187,32 +187,6 @@ def main(args):
         else:
             initial_prediction = predictions[0]
 
-        '''
-        # (TODO: to be implemented and adapted for self-reflection with gemini)
-        if config['use_self_reflect'] and config['use_self_reflect'] == True:
-            # TODO: to be tested
-            print('Using self-reflection to refine the prediction..')
-            reflection_prompt = prompt.copy()
-            reflection_prompt.append({
-                "role": "user",
-                "parts": str(config['prompts']['reflection'].format(initial_prediction=initial_prediction))
-            })
-            
-            reflection_params = {
-                "model": config['model_name'],
-                "messages": reflection_prompt,
-                "max_tokens": int(config['max_tokens']),
-                "temperature": config['temperature_self_reflect'],
-                "top_p": config['top_p_self_reflect']
-            }
-            
-            reflection_result = client.chat.completions.create(**reflection_params)
-            final_prediction = reflection_result.choices[0].message.parts
-        else:
-            final_prediction = initial_prediction
-        '''
-
-        # TODO: to be changed for self reflection:
         final_prediction = initial_prediction
 
         video_name = video.split('/')[-3:]

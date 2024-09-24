@@ -1,4 +1,4 @@
-# Description: This script is used to run experiments with different training data files.
+# Description: This script is used to run experiments with different batches of training data file.
 
 #!/bin/bash
 
