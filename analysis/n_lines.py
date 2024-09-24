@@ -32,5 +32,5 @@ plt.text(mean_pred, 0, f'{mean_pred:.2f}', fontsize=12, ha='center', va='top', c
 plt.text(mean_gold, 0, f'{mean_gold:.2f}', fontsize=12, ha='center', va='top', color='red')
 
 # Save the figure
-plt.savefig('log_scale_sop_lines.png', bbox_inches='tight') 
+plt.savefig('../figures/log_scale_sop_lines.png', bbox_inches='tight') 
 plt.show()

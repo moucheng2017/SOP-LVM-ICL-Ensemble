@@ -225,7 +225,7 @@ if __name__ == "__main__":
     # Change here:
     # ==========================================================================================
     # set up openai api key in terminal:
-    # export OPENAI_API_KEY="sk-proj-ZxH9n4f7EHjWlCBo0bdjT3BlbkFJzpfDqdqNHisk1b56DZoM"
+    # export OPENAI_API_KEY="your-key"
     gt_folder = "/home/moucheng/projects/screen_action_labels/data/Wonderbread/gold_demos" # path too the ground truth folder
     task_name = "Wonderbread_gold_demos_507" # name of the task, used for saving the results
     predictions_folder = ["/home/moucheng/projects/screen_action_labels/results/1726068460/Wonderbread/gold_demos"] # list of paths to the predictions folder

@@ -13,7 +13,7 @@ import argparse
 
 train_txt_full = "../data_splits/gold_demos/training/screenshots.txt"
 exclusion_txt_full = None
-batch_size = 25
+batch_size = 8
 random_seed = 42
 
 # Make the save folder for the training data batches:

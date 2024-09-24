@@ -51,5 +51,5 @@ for ax in axs:
 
 plt.show()
 # save the plot
-fig.savefig('accumulated_histograms.png', bbox_inches='tight')
+fig.savefig('../figures/accumulated_histograms.png', bbox_inches='tight')
 

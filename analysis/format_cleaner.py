@@ -9,6 +9,8 @@ from pathlib import Path
 import argparse
 import random
 
+# A lot of times, the SOPs are generated in a different format than the template, this is to clean it.
+
 # =============================================================================
 # Use gpt3.5 to clean up the format of the saved predictions.
 # 1. Read the template format.
@@ -19,7 +21,7 @@ import random
 template_path = '/home/moucheng/data/Wonderbread/gold_demos/14 @ 2024-01-05-02-12-26/SOP - 14 @ 2024-01-05-02-12-26.txt'
 template_path2 = '/home/moucheng/data/Wonderbread/gold_demos/1 @ 2023-12-25-15-44-04/SOP - 1 @ 2023-12-25-15-44-04.txt'
 template_path3 = '/home/moucheng/data/Wonderbread/gold_demos/63 @ 2024-01-05-04-12-52/SOP - 63 @ 2024-01-05-04-12-52.txt'
-client = OpenAI(api_key='sk-proj-ZxH9n4f7EHjWlCBo0bdjT3BlbkFJzpfDqdqNHisk1b56DZoM')
+client = OpenAI(api_key='some-key')
 model_name = 'gpt-3.5-turbo'
 prediction_folder = '/home/moucheng/results/1721919139/Wonderbread/gold_demos'
 

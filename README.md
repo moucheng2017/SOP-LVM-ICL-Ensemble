@@ -120,6 +120,8 @@ python evals/eval.py
 # Acknowledgement & Contacts
 **Moucheng Xu**: Conceptualization, Methodology, Project administration, Implementation, Integration, Data, Experiments, Formal analysis, Writing of the manuscript. **Evangelos Chatzaroulas**: Implementation of ICL with Phi-3.5 and CogAgent, Data, Experiments, Writing of the manuscript. **Luc McCutcheon**: Implementation of ICL with Gemini-1.5-flash, Writing of the manuscript. **Abdul Ahad, Hamzah Azeem, Janusz Marecki, Ammar Anwar**: Resources, Writing of the manuscript. 
 
+Our LLM based evaluation code is borrowed from: [wonderbread](https://github.com/HazyResearch/wonderbread/blob/main/wonderbread/benchmark/tasks/documentation/sop_generation/eval.py)
+
 Contact [Moucheng Xu](https://scholar.google.com/citations?hl=en&user=7uJJaLIAAAAJ&view_op=list_works) for any questions: xumoucheng28@gmail.com
 
 <!-- ## Citation

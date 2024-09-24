@@ -47,6 +47,6 @@ def create_violin_swarm_plot(df, metric, filename):
     fig.savefig(filename, bbox_inches='tight')
 
 # Create plots for precision, recall, and ordering
-create_violin_swarm_plot(df, 'precision', 'precision_distribution_violin_swarm_plot.png')
-create_violin_swarm_plot(df, 'recall', 'recall_distribution_violin_swarm_plot.png')
-create_violin_swarm_plot(df, 'ordering', 'ordering_distribution_violin_swarm_plot.png')
+create_violin_swarm_plot(df, 'precision', '../figures/precision_distribution_violin_swarm_plot.png')
+create_violin_swarm_plot(df, 'recall', '../figures/recall_distribution_violin_swarm_plot.png')
+create_violin_swarm_plot(df, 'ordering', '../figures/ordering_distribution_violin_swarm_plot.png')

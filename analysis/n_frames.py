@@ -45,7 +45,7 @@ plt.ylabel('Density', fontdict={'fontsize': 20})
 plt.legend(fontsize=20)
 plt.show()
 # save the plot
-plt.savefig('n_frames_vs_n_lines.png', bbox_inches='tight')
+plt.savefig('../figures/n_frames_vs_n_lines.png', bbox_inches='tight')
 
 
 # Add another column to the dataframe to store the ratio of the number of lines in the SOPs to the number of frames
@@ -58,4 +58,4 @@ plt.xlabel('n_lines_Gold_SOP / n_frames', fontdict={'fontsize': 20})
 plt.ylabel('Frequency', fontdict={'fontsize': 20})
 plt.show()
 # save the plot
-plt.savefig('ratio.png', bbox_inches='tight')
+plt.savefig('../figures/ratio.png', bbox_inches='tight')
