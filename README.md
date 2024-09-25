@@ -25,7 +25,7 @@ the models in SOP generation.
 - [**configs**](./configs/): the folder containing config files we used for SOP generation with different models
 - [**configs_ensemble**](./configs_ensemble/): the folder containing config files we used for different ensembles with different models
 - [**data_preprocessing**](./data_preprocessing/): the folder containing data downloading, train/test data split
-- [**data_splits**](./data_splits/): the folder containing the data splits txts we used in our paper, the paths in those txts are absolute paths so will not work on your data
+- [**data_splits**](./data_splits/): the folder containing the data splits txts we used in our paper
 - [**ensembles**](./ensembles/): the folder containing the code for ensemble and in-context ensemble
 - [**evals**](./evals/): the folder containing the code for evaluation of generated SOPs against gold SOPs
 - [**icls**](./icls/): the folder containing the code for different models in SOP generation
@@ -36,15 +36,17 @@ the models in SOP generation.
 
 # Results
 Beneath is the testing results on 507 videos from the "Gold Demo" subset of WONDERBREAD benchmark. Our evaluation is more challenging than the original one as we only feed videos into the models, *without* trace information (e.g. mouse clicks). **ICL**: in-context learning. **ICE**: in-context ensemble. **Ensemble**: majority voting of pseudo labels:
+
+<!-- ![Results](figures/results.png "Results screenshot.") -->
 | **Method** | **Training Data** | **Precision (%)**  | **Recall (%)**  | **Temporal Order (%)** |
 |------------|-------------------|-----------------------------|--------------------------|-----------------------------------|
 | **GPT-4o mini** | 
 | zero-shot  | n/a               | 42.62                       | 78.13                    | 32.93                             |
 | 8-shot ICL | Batch 1           | 43.16                       | 78.13                    | 33.46                             |
-| 8-shot ICL | Batch 2           | **45.95 (+3.33)**           | 78.13                    | 34.15                             |
+| 8-shot ICL | Batch 2           | <span style="color:red">**45.95 (+3.33)</span>**           | 78.13                    | 34.15                             |
 | 8-shot ICL | Batch 3           | 44.51                       | 78.13                    | 33.08                             |
 | Ensemble   | Batch 1 - 3       | 36.05                       | 72.31                    | 21.47                             |
-| **ICE (Ours)**    | Batch 1 - 3       | 44.34 (+1.72)               | **84.79 (+6.66)**        | **37.17 (+4.24)**                 |
+| **ICE (Ours)**    | Batch 1 - 3       | 44.34 (+1.72)               | <span style="color:red">**84.79 (+6.66)**</span>        | <span style="color:red">**37.17 (+4.24)**</span>                 |
 | **Gemini-1.5 flash** |
 | zero-shot  | n/a               | 34.35                       | 45.16                    | 27.82                             |
 | 8-shot ICL | Batch 1           | 34.10                       | 45.18                    | 35.15                             |
@@ -52,7 +54,7 @@ Beneath is the testing results on 507 videos from the "Gold Demo" subset of WOND
 | 8-shot ICL | Batch 3           | 34.08                       | 40.75                    | 29.77                             |
 | 24-shot ICL| Batch 1 - 3       | 29.75                       | 39.42                    | 26.47                             |
 | Ensemble   | Batch 1 - 3       | 30.30                       | 40.52                    | 26.12                             |
-| **ICE (Ours)**    | Batch 1 - 3       | **40.77 (+6.42)**           | **54.38 (+9.22)**        | **35.89 (+8.07)**                 |
+| **ICE (Ours)**    | Batch 1 - 3       | <span style="color:red">**40.77 (+6.42)**</span>           | <span style="color:red">**54.38 (+9.22)**</span>        | <span style="color:red">**35.89 (+8.07)**</span>                 |
 | **GPT-4o mini + Gemini-1.5 flash** |
 | **ICE (Ours)**    | Batch 1 - 3       | 41.54                       | 83.34                    | 34.33                             |
 | **Phi-3.5** |
