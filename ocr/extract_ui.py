@@ -4,7 +4,7 @@ import cv2
 import numpy as np
 
 # Path to the screenshot image file
-screenshot_path = 'path_to_your_screenshot.png'
+screenshot_path = '/home/moucheng/projects/screen_action_labels/data/Wonderbread/gold_demos/0 @ 2023-12-25-15-10-58/screenshots/2.png'
 
 # Open the image using Pillow
 img = Image.open(screenshot_path)
@@ -15,6 +15,7 @@ extracted_text = pytesseract.image_to_string(img)
 # Print the extracted text
 print(extracted_text)
 
+# Get the coordinates of each character
 boxes = pytesseract.image_to_boxes(img)
 for box in boxes.splitlines():
     b = box.split(' ')
