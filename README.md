@@ -15,8 +15,8 @@ the models in SOP generation.
 ![ICE](figures/ice.png "Plot of ICE pipeline.")
 
 # Features
-- Support zero-shot, few-shot, ensemble, multimodal in-context ensemble with OpenAI [GPT-4o-mini](https://openai.com/index/gpt-4o-mini-advancing-cost-efficient-intelligence/)
-- Support zero-shot, few-shot, ensemble, multimodal in-context ensemble with Google [Gemini-1.5-flash](https://deepmind.google/technologies/gemini/flash/)
+- Support zero-shot, few-shot, ensemble, multimodal in-context ensemble with OpenAI [GPT-4o](https://openai.com/index/gpt-4o-mini-advancing-cost-efficient-intelligence/)
+- Support zero-shot, few-shot, ensemble, multimodal in-context ensemble with Google [Gemini](https://deepmind.google/technologies/gemini/flash/)
 - Support zero-shot, few-shot, ensemble, multimodal in-context ensemble with public [CogAgent2](https://github.com/THUDM/CogVLM2)
 - Support zero-shot, few-shot, ensemble, multimodal in-context ensemble with Microsoft [Phi3.5](https://huggingface.co/microsoft/Phi-3.5-vision-instruct)
 
@@ -93,10 +93,8 @@ Wonderbread_gold_demos/
 ```
 
 # Quickstart for SOP generation
-1. Download the data via [`data_preprocessing/download_wonderbread.sh`](./data_preprocessing/download_wonderbread.sh). 
-2. Prepare your data splits via [`data_preprocessing/data_split.py`](./data_preprocessing/data_split.py). 
-3. Prepare further split of training data into batches via [`data_preprocessing/train_data_split.py`](./data_preprocessing/train_data_split.py).
-4. Choose a config template in [`configs`](./configs/) and change the data paths and hyper-parameters within that config. Then run the main function with the config file:
+1. Download the data via [`data_preprocessing/download_wonderbread.sh`](./data_preprocessing/download_wonderbread.sh). You can use the provided [`data_splits`](./data_splits/) in your config.
+2. Choose a config template in [`configs`](./configs/) and change the data paths and hyper-parameters within that config. Then run the main function with the config file:
 ```bash
 cd your_own_working_directory_of_this_repository
 python main.py --config configs/gpt4omini.yml
