@@ -6,6 +6,8 @@ test_screenshots_txt: data_splits/gold_demos/testing/screenshots.txt
 save_path: ../../results # change this to your own path
 max_tokens: 2000 # normally less than 4000
 in_context_learning: true # flag to use in context learning for fine tuning
+intent: true
+metadata: true
 temperature: 1.0
 temperature_reflect: 0.5
 effective_train_videos_number: 8
@@ -13,7 +15,7 @@ top_p: 0.9 # normally less than 1
 top_p_reflect: 0.99
 majority_voting_candidates: 1 # number of candidates for majority voting, if it is 1, it will not use majority voting
 use_self_reflect: false # when used, it will use the self-reflect mechanism
-debug_mode: false # when used, it will only test on the last video of the testing videos
+debug_mode: true # when used, it will only test on the last video of the testing videos
 prompts: 
   system: > 
    Your job is to write a standard operating procedure (SOP) for a workflow based on the given screenshots.

@@ -1,7 +1,7 @@
 import argparse
 
 from helpers import load_config
-from icls.icl_gemini import main_gemini
+from icls.icl_gemini_v2 import main_gemini
 from icls.icl_cogvlm2_video import main_cogvlm2_video
 from icls.icl_gpt import main_gpt
 from icls.icl_phi3_5 import main_phi3_5

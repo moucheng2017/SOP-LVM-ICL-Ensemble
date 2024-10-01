@@ -15,14 +15,21 @@ import argparse
 # This simple script splits the data into training and testing data.
 
 def prepare_data(source_path, 
+                 save_path=None,
                  train_ratio=0.1, 
                  test_ratio=0.1,
                  random_seed=42):
     
     # Go to the parent folder of the source_path as save_path
-    save_path = Path(source_path).parent.parent
+    if save_path is None:
+        save_path = Path(source_path).parent.parent
+        dataset_name = source_path.split('/')[-2]  
+    else:
+        save_path = Path(save_path)
+        dataset_name = source_path.split('/')[-1] 
+
     print(f"save_path_parent: {save_path}")
-    dataset_name = source_path.split('/')[-2]   
+    print(f"dataset_name: {dataset_name}")
     save_path = save_path / 'split' / dataset_name / str(time.time())
     print(f"save_path_full: {save_path}")
     os.makedirs(save_path, exist_ok=True)
@@ -59,27 +66,27 @@ def prepare_data(source_path,
     
     save_path_training.mkdir(parents=True, exist_ok=True)
     save_path_training_screenshots_txt = save_path_training / 'screenshots.txt'
-    save_path_training_labels_txt = save_path_training / 'labels.txt'
+    # save_path_training_labels_txt = save_path_training / 'labels.txt'
 
     with open(save_path_training_screenshots_txt, 'w') as f:
         for video in tqdm(train_data):
             f.write(video + '/screenshots \n')
     
-    with open(save_path_training_labels_txt, 'w') as f:
-        for video in tqdm(train_data):
-            f.write(video + '/*.txt \n')
+    # with open(save_path_training_labels_txt, 'w') as f:
+    #     for video in tqdm(train_data):
+    #         f.write(video + '/*.txt \n')
 
     save_path_testing.mkdir(parents=True, exist_ok=True)
     save_path_testing_screenshots_txt = save_path_testing / 'screenshots.txt'
-    save_path_testing_labels_txt = save_path_testing / 'labels.txt'
+    # save_path_testing_labels_txt = save_path_testing / 'labels.txt'
 
     with open(save_path_testing_screenshots_txt, 'w') as f:
         for video in test_data:
             f.write(video + '/screenshots \n')
     
-    with open(save_path_testing_labels_txt, 'w') as f:
-        for video in test_data:
-            f.write(video + '/*.txt \n')
+    # with open(save_path_testing_labels_txt, 'w') as f:
+    #     for video in test_data:
+    #         f.write(video + '/SOP*.txt \n')
     
     # get the split information:
     print(f"Training data: {len(train_data)}")
@@ -99,13 +106,15 @@ def prepare_data(source_path,
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Prepare data for training and testing.")
     parser.add_argument("--source_path", type=str, help="Path to the source data folder.")
+    parser.add_argument("--target_path", type=str, help="Path to the target data folder.")
     parser.add_argument("--train_ratio", type=float, default=0.3, help="Ratio of training data.")
     parser.add_argument("--test_ratio", type=float, default=0.7, help="Ratio of testing data.")
     parser.add_argument("--random_seed", type=int, default=42, help="Random seed.")
     
     args = parser.parse_args()
     
-    prepare_data(args.source_path, 
-                 args.train_ratio, 
-                 args.test_ratio,
-                 args.random_seed)
+    prepare_data(source_path=args.source_path, 
+                 save_path=args.target_path,
+                 train_ratio=args.train_ratio, 
+                 test_ratio=args.test_ratio,
+                 random_seed=args.random_seed)
