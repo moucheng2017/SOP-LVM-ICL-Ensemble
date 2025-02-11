@@ -1,5 +1,6 @@
 # Introduction
-This is an implementation of the paper **In-Context Ensemble Improves Video-Language Models for Low-Level Workflow Understanding from Human Demonstrations**. 
+This is an implementation of the paper [**In-Context Ensemble Learning from Pseudo Labels Improves Video-Language Models for Low-Level Workflow Understanding**](https://arxiv.org/pdf/2409.15867), presented at NeurIPS 2024 Workshop on Video-Language Models.
+
 
 # Abstract
 **SOP Generation Task:** A Standard Operating Procedure (SOP) defines a low-level, step-by-step written guide for a business software workflow based on a video demonstration. SOPs are a crucial step toward automating end-
