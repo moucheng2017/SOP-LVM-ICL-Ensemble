@@ -116,7 +116,20 @@ cd your_own_working_directory_of_this_repository
 cd evals
 python evals/eval.py
 ```
+
 **Metrics**: Precision measures how many steps in the prediction match those in the gold standard SOP. Recall measures how many steps of the gold standard SOP are included in the predictions. Temporal order evaluates whether the sequence of steps in the prediction aligns with the sequence in the gold standard SOP.
+
+## Citation
+Please consider citing the following if you found this work or code helpful!
+
+```
+@article{xmc2024icl,
+  title={In-Context Ensemble Learning from Pseudo Labels Improves Video-Language Models for Low-Level Workflow Understanding},
+  author={Xu, Moucheng and Chatzaroulas, Evangelos and McCutcheon, Luc and Ahad, Abdul and Azeem, Hamzah and Marecki, Janusz and Anwar, Ammar},
+  journal={NeurIPS Video-Language Models Workshop},
+  year={2024}
+}
+```
 
 # Acknowledgement & Contacts
 **Moucheng Xu**: Conceptualization, Methodology, Project administration, Implementation, Integration, Data, Experiments, Formal analysis, Writing of the manuscript. **Evangelos Chatzaroulas**: Implementation of ICL with Phi-3.5 and CogAgent, Data, Experiments, Writing of the manuscript. **Luc McCutcheon**: Implementation of ICL with Gemini-1.5-flash, Writing of the manuscript. **Abdul Ahad, Hamzah Azeem, Janusz Marecki, Ammar Anwar**: Resources, Writing of the manuscript. 
@@ -124,15 +137,3 @@ python evals/eval.py
 Our LLM based evaluation code is borrowed from: [wonderbread](https://github.com/HazyResearch/wonderbread/blob/main/wonderbread/benchmark/tasks/documentation/sop_generation/eval.py)
 
 Contact [Moucheng Xu](https://scholar.google.com/citations?hl=en&user=7uJJaLIAAAAJ&view_op=list_works) for any questions: xumoucheng28@gmail.com
-
-<!-- ## Citation
-Please consider citing the following if you found this work or code helpful!
-
-```
-@article{zhou2023webarena,
-  title={WebArena: A Realistic Web Environment for Building Autonomous Agents},
-  author={Zhou, Shuyan and Xu, Frank F and Zhu, Hao and Zhou, Xuhui and Lo, Robert and Sridhar, Abishek and Cheng, Xianyi and Bisk, Yonatan and Fried, Daniel and Alon, Uri and others},
-  journal={arXiv preprint arXiv:2307.13854},
-  year={2023}
-}
-``` -->
