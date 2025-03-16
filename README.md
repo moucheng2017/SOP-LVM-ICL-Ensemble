@@ -123,7 +123,7 @@ python evals/eval.py
 Please consider citing the following if you found this work or code helpful, thank you : )
 
 ```
-@article{xmc2024icl,
+@article{ice_nips_vlm_2024,
   title={In-Context Ensemble Learning from Pseudo Labels Improves Video-Language Models for Low-Level Workflow Understanding},
   author={Xu, Moucheng and Chatzaroulas, Evangelos and McCutcheon, Luc and Ahad, Abdul and Azeem, Hamzah and Marecki, Janusz and Anwar, Ammar},
   journal={NeurIPS Video-Language Models Workshop},
