@@ -119,7 +119,7 @@ python evals/eval.py
 
 **Metrics**: Precision measures how many steps in the prediction match those in the gold standard SOP. Recall measures how many steps of the gold standard SOP are included in the predictions. Temporal order evaluates whether the sequence of steps in the prediction aligns with the sequence in the gold standard SOP.
 
-## Citation
+# Citation
 Please consider citing the following if you found this work or code helpful, thank you : )
 
 ```
